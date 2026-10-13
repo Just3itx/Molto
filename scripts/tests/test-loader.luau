@@ -82,6 +82,15 @@ local function run(withFiles: boolean, badFont: boolean?)
 			assert(info.ImageRectSize[1] > 0 and info.ImageRectOffset[1] + info.ImageRectSize[1] <= 1024, `Bad rect: {id}/{icon}`)
 			assert(info.ImageRectOffset[2] + info.ImageRectSize[2] <= 1024, `Bad rect: {id}/{icon}`)
 			assert((info.FontFace ~= nil) == (withFiles and manifest[id].Font and not badFont), `Font mismatch: {id}/{icon}`)
+
+			-- the font part the loader picks must be the one the build put this icon in
+			if withFiles and manifest[id].Font and not badFont then
+				local file = `fonts/{id}/{id}-{info.FontPart}.codepoints.json`
+				if fs.isFile(file) then
+					local glyphs = serde.decode("json", fs.readFile(file)).icons
+					assert(glyphs[icon], `Icon {id}/{icon} is not in font part {info.FontPart}`)
+				end
+			end
 		end
 	end
 	assert(not pcall(registry.SetProvider, "nope"))

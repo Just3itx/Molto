@@ -82,7 +82,7 @@ type ProviderState = {
 	Index: { [string]: number },
 	SheetUrls: { [number]: string },
 	Folder: string,
-	FontPartSize: number?,
+	FontParts: number?,
 	FontName: string,
 	Fonts: { [number]: Font | false },
 }
@@ -160,13 +160,22 @@ local function LoadProvider(id: string): ProviderState
 		Index = index,
 		SheetUrls = sheetUrls,
 		Folder = folder,
-		FontPartSize = if meta.Font then meta.FontPartSize else nil,
+		FontParts = if meta.Font then meta.FontParts else nil,
 		FontName = meta.Name,
 		Fonts = {},
 	}
 
 	loadedProviders[id] = state
 	return state
+end
+
+-- Must match FontPartOf in scripts/build.luau
+local function FontPartOf(name: string, parts: number): number
+	local hash = 7
+	for index = 1, #name do
+		hash = (hash * 131 + string.byte(name, index)) % 2147483629
+	end
+	return hash % parts + 1
 end
 
 -- Big sets are split into several fonts, so a font is downloaded when its first icon is looked up
@@ -249,7 +258,8 @@ function Registry.GetAsset(name: string, provider: string?)
 	end
 
 	local rect = state.Rects[position]
-	local fontFace = if state.FontPartSize then GetFontFace(state, math.ceil(position / state.FontPartSize)) else nil
+	local fontPart = if state.FontParts then FontPartOf(resolved, state.FontParts) else nil
+	local fontFace = if fontPart then GetFontFace(state, fontPart) else nil
 
 	return {
 		IconName = name,
@@ -260,6 +270,7 @@ function Registry.GetAsset(name: string, provider: string?)
 
 		-- Only present when the provider font loaded. The font shapes Text into one icon through a ligature
 		FontFace = fontFace,
+		FontPart = fontPart,
 		Text = if fontFace then resolved else nil,
 	}
 end

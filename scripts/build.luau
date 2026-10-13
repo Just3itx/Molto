@@ -23,7 +23,7 @@ type ProviderMeta = {
 	Count: number,
 	Font: boolean,
 	FontParts: number,
-	FontPartSize: number,
+	FontSources: { string },
 	SourceHash: string,
 }
 
@@ -41,7 +41,8 @@ local ROBLOX_CREATOR_ID = process.env["ROBLOX_CREATOR_ID"]
 local ICON_SIZE = 24
 local WORKERS = 8
 local FONT_WORKERS = 3
--- A TrueType ligature table overflows at a few thousand icons, so big sets are split into several fonts
+-- A TrueType ligature table overflows at a few thousand icons, so big sets are split into several fonts.
+-- This is the target number of icons per font, the real count varies a little because icons are spread by name hash
 local FONT_PART_SIZE = 1500
 -- Bump when the build pipeline changes in a way that alters the generated assets
 local PIPELINE_VERSION = 1
@@ -411,7 +412,18 @@ local function IsUpToDate(provider: ProviderConfig, hash: string): boolean
 	return (meta.Font == true) == fs.isDir(`fonts/{provider.id}`)
 end
 
---// Provider build \--
+--// Fonts \\--
+-- Must match FontPartOf in scripts/assets/template.luau. Spreading icons by name hash (instead of by position)
+-- means adding or removing an icon only changes the font part that icon belongs to
+local function FontPartOf(name: string, parts: number): number
+	local hash = 7
+	for index = 1, #name do
+		hash = (hash * 131 + string.byte(name, index)) % 2147483629
+	end
+	return hash % parts + 1
+end
+
+--// Provider build \\--
 local function BuildProvider(provider: ProviderConfig, SourceHash: string): ProviderMeta
 	print(`\n=== Building provider "{provider.id}" ({provider.prefix}) ===`)
 
@@ -542,10 +554,29 @@ end]]
 
 	-- Icon font: names shape into one glyph through an OpenType ligature. Big sets are split into parts
 	local FontDir = `fonts/{provider.id}`
+	local Previous = Manifest[provider.id]
 	local FontVersions = {}
+	local FontSources = {}
 	local FontParts = 0
 	if provider.font ~= false then
 		local PartCount = math.ceil(#Icons / FONT_PART_SIZE)
+		local PartNames = {}
+		for part = 1, PartCount do
+			PartNames[part] = {}
+		end
+		for _, name in Icons do
+			table.insert(PartNames[FontPartOf(name, PartCount)], name)
+		end
+
+		-- A part is rebuilt only when its icons or their svgs changed
+		for part, names in PartNames do
+			local lines = { tostring(PIPELINE_VERSION) }
+			for _, name in names do
+				table.insert(lines, `{name}:{serde.hash("sha256", fs.readFile(`{svgDir}/{name}.svg`))}`)
+			end
+			FontSources[part] = serde.hash("sha256", table.concat(lines, "\n"))
+		end
+
 		local Parts = {}
 		for part = 1, PartCount do
 			table.insert(Parts, part)
@@ -553,24 +584,37 @@ end]]
 
 		local Failed = false
 		RunPool(Parts, function(part: number)
-			local first = (part - 1) * FONT_PART_SIZE + 1
-			local namesFile = `{outputDir}/font-part-{part}.json`
-			fs.writeFile(namesFile, serde.encode("json", table.move(Icons, first, math.min(first + FONT_PART_SIZE - 1, #Icons), 1, {})))
+			local fontName = `{provider.id}-{part}`
+			local codepointsFile = `{FontDir}/{fontName}.codepoints.json`
 
-			local FontResult = RunCommand(`node scripts/build-font.mjs {svgDir} {FontDir} {provider.id}-{part} {namesFile}`, nil, false)
+			local Unchanged = Previous
+				and Previous.FontSources
+				and Previous.FontSources[part] == FontSources[part]
+				and fs.isFile(`{FontDir}/{fontName}.ttf`)
+				and fs.isFile(codepointsFile)
+			if Unchanged then
+				FontVersions[part] = serde.decode("json", fs.readFile(codepointsFile)).version
+				return `Font part {part} of {PartCount} unchanged`
+			end
+
+			local namesFile = `{outputDir}/font-part-{part}.json`
+			fs.writeFile(namesFile, serde.encode("json", PartNames[part]))
+
+			local FontResult = RunCommand(`node scripts/build-font.mjs {svgDir} {FontDir} {fontName} {namesFile}`, nil, false)
 			if not FontResult.ok then
 				Failed = true
 				stdio.ewrite(`Font part {part} failed for {provider.id}\n{FontResult.stderr}\n`)
 				return `✗ Font part {part}`
 			end
 
-			FontVersions[part] = serde.decode("json", fs.readFile(`{FontDir}/{provider.id}-{part}.codepoints.json`)).version
+			FontVersions[part] = serde.decode("json", fs.readFile(codepointsFile)).version
 			return `✓ Font part {part} of {PartCount}`
 		end, FONT_WORKERS)
 
 		if Failed then
 			stdio.ewrite(`Warning: font build failed for {provider.id}, it will ship without a font\n`)
 			FontVersions = {}
+			FontSources = {}
 		else
 			FontParts = PartCount
 
@@ -610,7 +654,7 @@ end]]
 		Count = #Icons,
 		Font = FontParts > 0,
 		FontParts = FontParts,
-		FontPartSize = FONT_PART_SIZE,
+		FontSources = FontSources,
 		SourceHash = SourceHash,
 	}
 end
