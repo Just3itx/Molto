@@ -81,7 +81,10 @@ type ProviderState = {
 	Rects: { { any } },
 	Index: { [string]: number },
 	SheetUrls: { [number]: string },
-	FontFace: Font?,
+	Folder: string,
+	FontPartSize: number?,
+	FontName: string,
+	Fonts: { [number]: Font | false },
 }
 
 local loadedProviders: { [string]: ProviderState } = {}
@@ -137,28 +140,6 @@ local function LoadProvider(id: string): ProviderState
 		end
 	end
 
-	local fontFace: Font? = nil
-	if meta.Font and AssetManager.Supported then
-		pcall(function()
-			local ttfFile = `{folder}/font.ttf`
-			local familyFile = `{folder}/font.json`
-
-			AssetManager.EnsureFolder(folder)
-			AssetManager.Download(ttfFile, `{ASSET_BASE_URL}fonts/{id}/{id}.ttf`, function(data)
-				return data:sub(1, 4) == "\0\1\0\0" -- TrueType header
-			end)
-			AssetManager.Write(familyFile, game:GetService("HttpService"):JSONEncode({
-				name = meta.Name,
-				loadStrategy = "sameFamilyOnly",
-				faces = {
-					{ name = "Regular", weight = 400, style = "normal", assetId = AssetManager.GetAsset(ttfFile) },
-				},
-			}))
-
-			fontFace = Font.new(AssetManager.GetAsset(familyFile))
-		end)
-	end
-
 	local data = loadstring(source or game:HttpGet(dataUrl))()
 
 	local sheetUrls = {}
@@ -178,14 +159,48 @@ local function LoadProvider(id: string): ProviderState
 		Rects = data.Rects,
 		Index = index,
 		SheetUrls = sheetUrls,
-		FontFace = fontFace,
+		Folder = folder,
+		FontPartSize = if meta.Font then meta.FontPartSize else nil,
+		FontName = meta.Name,
+		Fonts = {},
 	}
 
 	loadedProviders[id] = state
 	return state
 end
 
---// API \\--
+-- Big sets are split into several fonts, so a font is downloaded when its first icon is looked up
+local function GetFontFace(state: ProviderState, part: number): Font?
+	local cached = state.Fonts[part]
+	if cached ~= nil then return cached or nil end
+
+	local face: Font? = nil
+	if AssetManager.Supported then
+		pcall(function()
+			local ttfFile = `{state.Folder}/font-{part}.ttf`
+			local familyFile = `{state.Folder}/font-{part}.json`
+
+			AssetManager.EnsureFolder(state.Folder)
+			AssetManager.Download(ttfFile, `{ASSET_BASE_URL}fonts/{state.Id}/{state.Id}-{part}.ttf`, function(data)
+				return data:sub(1, 4) == "\0\1\0\0" -- TrueType header
+			end)
+			AssetManager.Write(familyFile, game:GetService("HttpService"):JSONEncode({
+				name = `{state.FontName} {part}`,
+				loadStrategy = "sameFamilyOnly",
+				faces = {
+					{ name = "Regular", weight = 400, style = "normal", assetId = AssetManager.GetAsset(ttfFile) },
+				},
+			}))
+
+			face = Font.new(AssetManager.GetAsset(familyFile))
+		end)
+	end
+
+	state.Fonts[part] = face or false
+	return face
+end
+
+--// API \--
 Registry.Providers = {}
 for id in PROVIDERS do
 	table.insert(Registry.Providers, id)
@@ -234,6 +249,8 @@ function Registry.GetAsset(name: string, provider: string?)
 	end
 
 	local rect = state.Rects[position]
+	local fontFace = if state.FontPartSize then GetFontFace(state, math.ceil(position / state.FontPartSize)) else nil
+
 	return {
 		IconName = name,
 		Provider = state.Id,
@@ -242,8 +259,8 @@ function Registry.GetAsset(name: string, provider: string?)
 		ImageRectOffset = Vector2.new(rect[3][1], rect[3][2]),
 
 		-- Only present when the provider font loaded. The font shapes Text into one icon through a ligature
-		FontFace = state.FontFace,
-		Text = if state.FontFace then resolved else nil,
+		FontFace = fontFace,
+		Text = if fontFace then resolved else nil,
 	}
 end
 

@@ -8,19 +8,22 @@ import opentype from "opentype.js";
 // usage: node scripts/test-font.mjs <output dir> <svg dir> <font name>
 const [outputDir, iconsDir, fontName] = process.argv.slice(2);
 if (!outputDir || !iconsDir || !fontName) throw new Error("Usage: test-font.mjs <output dir> <svg dir> <font name>");
-const data = JSON.parse(await readFile(path.join(outputDir, "codepoints.json"), "utf8"));
+const codepointsFile = `${fontName}.codepoints.json`;
+const data = JSON.parse(await readFile(path.join(outputDir, codepointsFile), "utf8"));
 const bytes = await readFile(path.join(outputDir, `${fontName}.ttf`));
 const font = opentype.parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
 assert.equal(data.version, createHash("sha256").update(bytes).digest("hex"));
 assert.equal(new Set(Object.values(data.icons)).size, Object.keys(data.icons).length);
-const previous = spawnSync("git", ["show", `HEAD:${outputDir}/codepoints.json`], { encoding: "utf8" });
+const previous = spawnSync("git", ["show", `HEAD:${outputDir}/${codepointsFile}`], { encoding: "utf8" });
 if (previous.status === 0) {
   for (const [name, codepoint] of Object.entries(JSON.parse(previous.stdout).icons)) {
     if (name in data.icons) assert.equal(data.icons[name], codepoint, `Remapped glyph: ${name}`);
   }
 }
-const names = (await readdir(iconsDir)).filter((name) => name.endsWith(".svg")).map((name) => name.slice(0, -4));
-assert.deepEqual(Object.keys(data.icons).sort(), names.sort());
+// A font covers one part of a provider, so every glyph must have a source svg but not the other way round
+const available = new Set((await readdir(iconsDir)).filter((name) => name.endsWith(".svg")).map((name) => name.slice(0, -4)));
+const names = Object.keys(data.icons).sort();
+for (const name of names) assert.ok(available.has(name), `No svg for glyph: ${name}`);
 for (const [name, codepoint] of Object.entries(data.icons)) {
   assert.ok(codepoint >= 0xE000 && codepoint <= 0xF8FF, name);
   const index = font.charToGlyphIndex(String.fromCodePoint(codepoint));

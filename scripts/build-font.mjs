@@ -1,24 +1,26 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, writeFile, rm } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import SVGFixer from "oslllo-svg-fixer";
 import svgtofont from "svgtofont";
 
-// usage: node scripts/build-font.mjs <svg dir> <output dir> <font name>
-const [svgArg, outputArg, fontName] = process.argv.slice(2);
-if (!svgArg || !outputArg || !fontName) throw new Error("Usage: build-font.mjs <svg dir> <output dir> <font name>");
-const iconsDir = path.resolve(svgArg);
+// usage: node scripts/build-font.mjs <svg dir> <output dir> <font name> <names json>
+// <names json> is a JSON array with the icon names this font covers (one font part of a provider)
+const [svgArg, outputArg, fontName, namesArg] = process.argv.slice(2);
+if (!svgArg || !outputArg || !fontName || !namesArg) throw new Error("Usage: build-font.mjs <svg dir> <output dir> <font name> <names json>");
+const svgDir = path.resolve(svgArg);
+const iconsDir = path.resolve(`build/outputs/${fontName}/part-svgs`);
 const outputDir = path.resolve(outputArg);
 const outlinedDir = path.resolve(`build/outputs/${fontName}/font-outlines`);
 const fontDir = path.resolve(`build/outputs/${fontName}/font`);
-const names = (await readdir(iconsDir))
-  .filter((name) => name.endsWith(".svg"))
-  .map((name) => name.slice(0, -4))
-  .sort();
-if (!names.length) throw new Error("No SVG icons found for font generation");
+const names = JSON.parse(await readFile(path.resolve(namesArg), "utf8")).sort();
+if (!names.length) throw new Error("No icons given for font generation");
+await rm(iconsDir, { recursive: true, force: true });
+await mkdir(iconsDir, { recursive: true });
+for (const name of names) await copyFile(path.join(svgDir, `${name}.svg`), path.join(iconsDir, `${name}.svg`));
 let previous = { icons: {}, nextCodepoint: 0xE000 };
 try {
-  previous = JSON.parse(await readFile(path.join(outputDir, "codepoints.json"), "utf8"));
+  previous = JSON.parse(await readFile(path.join(outputDir, `${fontName}.codepoints.json`), "utf8"));
 } catch (error) {
   if (error.code !== "ENOENT") throw error;
 }
@@ -67,5 +69,5 @@ font.writeUInt32BE((0xB1B0AFBA - checksum(0, font.length)) >>> 0, headOffset + 8
 const version = createHash("sha256").update(font).digest("hex");
 await mkdir(outputDir, { recursive: true });
 await writeFile(path.join(outputDir, `${fontName}.ttf`), font);
-await writeFile(path.join(outputDir, "codepoints.json"), JSON.stringify({ version, nextCodepoint, icons }, null, 2) + "\n");
+await writeFile(path.join(outputDir, `${fontName}.codepoints.json`), JSON.stringify({ version, nextCodepoint, icons }, null, 2) + "\n");
 console.log(`Generated ${fontName}.ttf with ${names.length} icons`);

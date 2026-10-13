@@ -22,6 +22,8 @@ type ProviderMeta = {
 	Sheets: number,
 	Count: number,
 	Font: boolean,
+	FontParts: number,
+	FontPartSize: number,
 }
 
 type UploadAssetOptions = {
@@ -37,6 +39,9 @@ local ROBLOX_CREATOR_ID = process.env["ROBLOX_CREATOR_ID"]
 
 local ICON_SIZE = 24
 local WORKERS = 8
+local FONT_WORKERS = 3
+-- A TrueType ligature table overflows at a few thousand icons, so big sets are split into several fonts
+local FONT_PART_SIZE = 1500
 local ICON_SETS_DIR = "build/icon-sets"
 local MANIFEST_PATH = "providers/manifest.json"
 
@@ -89,12 +94,12 @@ local function RunCommand(cmd: string, cwd: string?, check: boolean?): any
 end
 
 -- Runs fn over items with a fixed number of concurrent workers
-local function RunPool(items: { any }, fn: (any) -> string)
+local function RunPool(items: { any }, fn: (any) -> string, workers: number?)
 	local total = #items
 	local nextIndex = 0
 	local completed = 0
 
-	for _ = 1, math.min(WORKERS, total) do
+	for _ = 1, math.min(workers or WORKERS, total) do
 		task.spawn(function()
 			while true do
 				nextIndex += 1
@@ -490,27 +495,64 @@ end]]
 	-- Index for the icon browser in site/
 	fs.writeFile(`site/data/{provider.id}.json`, serde.encode("json", { icons = Icons, aliases = Aliases }))
 
-	-- Icon font: names shape into one glyph through an OpenType ligature
+	-- Icon font: names shape into one glyph through an OpenType ligature. Big sets are split into parts
 	local FontDir = `fonts/{provider.id}`
-	local FontVersion: string? = nil
-	if provider.font == false then
-		if fs.isDir(FontDir) then
-			fs.removeDir(FontDir)
+	local FontVersions = {}
+	local FontParts = 0
+	if provider.font ~= false then
+		local PartCount = math.ceil(#Icons / FONT_PART_SIZE)
+		local Parts = {}
+		for part = 1, PartCount do
+			table.insert(Parts, part)
 		end
-	else
-		local FontResult = RunCommand(`node scripts/build-font.mjs {svgDir} {FontDir} {provider.id}`, nil, false)
-		if FontResult.ok then
-			FontVersion = serde.decode("json", fs.readFile(`{FontDir}/codepoints.json`)).version
+
+		local Failed = false
+		RunPool(Parts, function(part: number)
+			local first = (part - 1) * FONT_PART_SIZE + 1
+			local namesFile = `{outputDir}/font-part-{part}.json`
+			fs.writeFile(namesFile, serde.encode("json", table.move(Icons, first, math.min(first + FONT_PART_SIZE - 1, #Icons), 1, {})))
+
+			local FontResult = RunCommand(`node scripts/build-font.mjs {svgDir} {FontDir} {provider.id}-{part} {namesFile}`, nil, false)
+			if not FontResult.ok then
+				Failed = true
+				stdio.ewrite(`Font part {part} failed for {provider.id}\n{FontResult.stderr}\n`)
+				return `✗ Font part {part}`
+			end
+
+			FontVersions[part] = serde.decode("json", fs.readFile(`{FontDir}/{provider.id}-{part}.codepoints.json`)).version
+			return `✓ Font part {part} of {PartCount}`
+		end, FONT_WORKERS)
+
+		if Failed then
+			stdio.ewrite(`Warning: font build failed for {provider.id}, it will ship without a font\n`)
+			FontVersions = {}
 		else
-			stdio.ewrite(`Warning: font build failed for {provider.id}, it will ship without a font\n{FontResult.stderr}\n`)
-			if fs.isDir(FontDir) then
-				fs.removeDir(FontDir)
+			FontParts = PartCount
+
+			-- Drop files from an older layout
+			local Keep = {}
+			for part = 1, PartCount do
+				Keep[`{provider.id}-{part}.ttf`] = true
+				Keep[`{provider.id}-{part}.codepoints.json`] = true
+			end
+			for _, file in fs.readDir(FontDir) do
+				if not Keep[file] then
+					if fs.isDir(`{FontDir}/{file}`) then
+						fs.removeDir(`{FontDir}/{file}`)
+					else
+						fs.removeFile(`{FontDir}/{file}`)
+					end
+				end
 			end
 		end
 	end
 
+	if FontParts == 0 and fs.isDir(FontDir) then
+		fs.removeDir(FontDir)
+	end
+
 	-- Hash every sheet and the font so the loader caches each build in its own folder
-	local SheetHashes = { FontVersion or "nofont" }
+	local SheetHashes = { if FontParts > 0 then table.concat(FontVersions, ",") else "nofont" }
 	for index in SheetFiles do
 		table.insert(SheetHashes, serde.hash("sha256", fs.readFile(`{SheetDir}/{index}.png`)))
 	end
@@ -521,7 +563,9 @@ end]]
 		Hash = serde.hash("sha256", table.concat(SheetHashes, "\n")),
 		Sheets = #SheetFiles,
 		Count = #Icons,
-		Font = FontVersion ~= nil,
+		Font = FontParts > 0,
+		FontParts = FontParts,
+		FontPartSize = FONT_PART_SIZE,
 	}
 end
 
