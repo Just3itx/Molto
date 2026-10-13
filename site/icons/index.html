@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molto Icons</title>
+<meta name="description" content="Search icons from Lucide, Tabler, Heroicons, Phosphor and Fluent, tune color and size, and copy the Roblox code.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ff8a3d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../base.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="../" aria-label="Molto home">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <span>Molto</span>
+  </a>
+  <label class="search">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="search" type="search" placeholder="Search icons" autocomplete="off" spellcheck="false" aria-label="Search icons">
+    <kbd>/</kbd>
+  </label>
+  <div class="tools">
+    <label class="tool" title="Icon color">
+      <span class="tool-label">Color</span>
+      <input id="color" type="color" value="#ffffff">
+      <button id="color-reset" class="mini" type="button" title="Use the page text color">Auto</button>
+    </label>
+    <label class="tool stroke-tool" id="stroke-tool" title="Stroke width">
+      <span class="tool-label">Stroke</span>
+      <input id="stroke" type="range" min="0.5" max="3" step="0.25" value="2">
+      <output id="stroke-out">2</output>
+    </label>
+  </div>
+</header>
+
+<nav class="providers" id="providers" aria-label="Icon providers"></nav>
+
+<div class="layout">
+  <main>
+    <div class="status" id="status" role="status"></div>
+    <div class="grid" id="grid"></div>
+    <div id="sentinel" aria-hidden="true"></div>
+  </main>
+
+  <aside class="detail" id="detail" aria-label="Icon details" hidden>
+    <div class="detail-head">
+      <h2 id="d-name"></h2>
+      <button class="icon-btn" id="d-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="preview" id="d-preview"></div>
+    <p class="hint" id="d-hint" hidden>Spritesheets are 24px, so larger sizes scale up and look soft.</p>
+
+    <div class="field">
+      <label for="d-size">Size</label>
+      <input id="d-size" type="range" min="12" max="128" step="1" value="32">
+      <input id="d-size-num" type="number" min="12" max="512" value="32" aria-label="Size in pixels">
+    </div>
+
+    <div class="aliases" id="d-aliases" hidden></div>
+
+    <div class="actions">
+      <button type="button" id="a-lua" class="primary">Copy Lua</button>
+      <button type="button" id="a-name">Copy name</button>
+      <button type="button" id="a-svg">Copy SVG</button>
+      <button type="button" id="a-dl-svg">Download SVG</button>
+      <button type="button" id="a-dl-png">Download PNG</button>
+    </div>
+
+    <div class="tabs" id="d-tabs" role="tablist"></div>
+    <pre class="code"><code id="d-code"></code></pre>
+    <p class="meta" id="d-meta"></p>
+  </aside>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

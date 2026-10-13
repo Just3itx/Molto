@@ -1,0 +1,10 @@
+{
+	"default": "lucide",
+	"providers": [
+		{ "id": "lucide", "prefix": "lucide", "name": "Lucide" },
+		{ "id": "tabler", "prefix": "tabler", "name": "Tabler", "font": false },
+		{ "id": "heroicons", "prefix": "heroicons", "name": "Heroicons" },
+		{ "id": "phosphor", "prefix": "ph", "name": "Phosphor", "font": false },
+		{ "id": "fluent", "prefix": "fluent", "name": "Fluent UI", "font": false }
+	]
+}

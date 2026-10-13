@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molto: Icon Registry for Roblox</title>
+<meta name="description" content="One loader for Lucide, Tabler, Heroicons, Phosphor and Fluent icons in Roblox. Switch providers at runtime and get sprite or font assets.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ff8a3d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="home.css">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="./" aria-label="Molto home">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <span>Molto</span>
+  </a>
+  <nav>
+    <a href="#providers">Providers</a>
+    <a href="#usage">Usage</a>
+    <a href="icons/" class="btn small">Browse icons</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Icon registry for Roblox</p>
+      <h1>Every icon set.<br>One loader.</h1>
+      <p class="lead">
+        Lucide, Tabler, Heroicons, Phosphor and Fluent, packed into spritesheets and fonts.
+        Switch providers at runtime and get a ready-to-use asset for any icon.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="icons/">Browse icons</a>
+        <button class="btn" id="copy-loader" type="button">Copy loader</button>
+      </div>
+      <dl class="stats" id="stats" hidden>
+        <div><dt>Icons</dt><dd id="stat-icons"></dd></div>
+        <div><dt>Providers</dt><dd id="stat-providers"></dd></div>
+      </dl>
+    </div>
+
+    <div class="code-card" aria-label="Example">
+      <div class="code-bar"><span></span><span></span><span></span><b>example.lua</b></div>
+<pre><code><span class="c">-- load the registry</span>
+<span class="k">local</span> Icons = <span class="f">loadstring</span>(
+    game:<span class="f">HttpGet</span>(<span class="s">"…/source.lua"</span>)
+)()
+
+<span class="c">-- pick a provider, then look icons up by name</span>
+Icons.<span class="f">SetProvider</span>(<span class="s">"tabler"</span>)
+<span class="k">local</span> icon = Icons.<span class="f">GetAsset</span>(<span class="s">"moon"</span>)
+
+image.Image = icon.Url
+image.ImageRectSize = icon.ImageRectSize
+image.ImageRectOffset = icon.ImageRectOffset</code></pre>
+    </div>
+  </section>
+
+  <section class="section" id="providers">
+    <div class="section-head">
+      <h2>Providers</h2>
+      <p>Pick the look you want. Every provider shares the same API.</p>
+    </div>
+    <div class="cards" id="provider-cards" aria-live="polite">
+      <p class="muted">Loading providers…</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Built for executors</h2>
+      <p>The loader adapts to what your environment supports.</p>
+    </div>
+    <div class="features">
+      <article>
+        <h3>Switch at runtime</h3>
+        <p><code>SetProvider</code> changes the default, or pass a provider to a single lookup. Providers load lazily the first time you use them.</p>
+      </article>
+      <article>
+        <h3>Sprites and fonts</h3>
+        <p>Every icon returns an image rect for <code>ImageLabel</code>. Providers with a font also return <code>FontFace</code> and <code>Text</code> for crisp, scalable icons.</p>
+      </article>
+      <article>
+        <h3>Cached on disk</h3>
+        <p>Spritesheets, fonts and data are stored per build, and older builds are pruned. Without file support it falls back to uploaded Roblox assets.</p>
+      </article>
+      <article>
+        <h3>Aliases resolve</h3>
+        <p>Renamed icons keep working. Aliases point at the real icon, so old names from your scripts still find their sprite.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="usage">
+    <div class="section-head">
+      <h2>Usage</h2>
+      <p>Three calls cover most scripts.</p>
+    </div>
+    <ol class="steps">
+      <li>
+        <h3>Load the registry</h3>
+        <pre><code>local Icons = loadstring(game:HttpGet("<span id="loader-url"></span>"))()</code></pre>
+      </li>
+      <li>
+        <h3>Choose a provider</h3>
+        <pre><code>print(Icons.Providers) -- sorted provider ids
+Icons.SetProvider("lucide")</code></pre>
+      </li>
+      <li>
+        <h3>Look up an icon</h3>
+        <pre><code>local icon = Icons.GetAsset("moon")            -- active provider
+local other = Icons.GetAsset("moon", "tabler") -- one-off lookup</code></pre>
+      </li>
+    </ol>
+    <p class="after"><a class="btn" href="icons/">Find an icon name</a></p>
+  </section>
+</main>
+
+<footer>
+  <span>Icon sets come from <a href="https://github.com/iconify/icon-sets" rel="noopener">iconify/icon-sets</a> and keep their own licenses.</span>
+  <a href="https://github.com/notpoiu/Molto" rel="noopener">GitHub</a>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="home.js"></script>
+</body>
+</html>

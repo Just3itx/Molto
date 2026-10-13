@@ -1,0 +1,16 @@
+{
+  "name": "molto",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:font": "node scripts/build-font.mjs",
+    "test": "sh scripts/test.sh"
+  },
+  "dependencies": {
+    "oslllo-svg-fixer": "6.0.1",
+    "svgtofont": "6.5.3"
+  },
+  "devDependencies": {
+    "opentype.js": "1.3.4"
+  }
+}
