@@ -1,0 +1,42 @@
+{
+  "fluent": {
+    "Count": 20289,
+    "Font": false,
+    "Hash": "147c6982e1add2de0edee16ee9b04eed24e29eab03bcaa6f4057606590981f14",
+    "License": "MIT",
+    "Name": "Fluent UI",
+    "Sheets": 26
+  },
+  "heroicons": {
+    "Count": 1288,
+    "Font": true,
+    "Hash": "d906f435e3ff112e424c35bef961eac2f204dd9ed9526de86514c11f0980192a",
+    "License": "MIT",
+    "Name": "Heroicons",
+    "Sheets": 2
+  },
+  "lucide": {
+    "Count": 1949,
+    "Font": true,
+    "Hash": "7c7e6a0b7c310227eef7657af5667ec6affea80bc40379a02da663b784e0113a",
+    "License": "ISC",
+    "Name": "Lucide",
+    "Sheets": 3
+  },
+  "phosphor": {
+    "Count": 9161,
+    "Font": false,
+    "Hash": "466ebef9aa795c36e52848cfe6e8490e96101afabda379f9f59332561ccbb8cb",
+    "License": "MIT",
+    "Name": "Phosphor",
+    "Sheets": 12
+  },
+  "tabler": {
+    "Count": 6286,
+    "Font": false,
+    "Hash": "c566e59434f03b405de969b5c63628f4a4ab9712cb8b7258653fbe65e4e72f7e",
+    "License": "MIT",
+    "Name": "Tabler",
+    "Sheets": 8
+  }
+}
