@@ -4,6 +4,7 @@
 #
 
 import argparse
+import sys
 import os
 import time
 import requests
@@ -24,6 +25,25 @@ asset_type_map = {
     '.fbx': 'Model',
     '.obj': 'Model'
 }
+
+def with_retries(action, attempts=5):
+    """Run a request, retrying on connection errors and 5xx/429 responses with backoff"""
+    for attempt in range(1, attempts + 1):
+        try:
+            response = action()
+            if response.status_code < 500 and response.status_code != 429:
+                return response
+            error = f"HTTP {response.status_code}"
+        except requests.exceptions.RequestException as e:
+            error = str(e)
+
+        if attempt == attempts:
+            raise RuntimeError(f"Giving up after {attempts} attempts: {error}")
+
+        delay = 2 ** attempt
+        print(f"Retrying in {delay}s ({error})", file=sys.stderr)
+        time.sleep(delay)
+
 
 def upload_asset(file_path, name, description, auth_token, creator_id, creator_type="user"):
     if not os.path.exists(file_path):
@@ -52,14 +72,17 @@ def upload_asset(file_path, name, description, auth_token, creator_id, creator_t
         }
     }
     
-    with open(file_path, 'rb') as file:
-        files = {
-            'request': (None, json.dumps(request_data), 'application/json'),
-            'fileContent': (os.path.basename(file_path), file, 'application/octet-stream')
-        }
-        
+    def post_asset():
+        with open(file_path, 'rb') as file:
+            files = {
+                'request': (None, json.dumps(request_data), 'application/json'),
+                'fileContent': (os.path.basename(file_path), file, 'application/octet-stream')
+            }
+            return requests.post("https://apis.roblox.com/assets/v1/assets", headers=headers, files=files)
+
+    if True:
         try:
-            response = requests.post("https://apis.roblox.com/assets/v1/assets", headers=headers, files=files)
+            response = with_retries(post_asset)
             
             if response.status_code != 200:
                 print(f"❌ Upload failed with status code: {response.status_code}")
@@ -73,7 +96,7 @@ def upload_asset(file_path, name, description, auth_token, creator_id, creator_t
             while True:
                 time.sleep(0.25)
                 status_url = f"https://apis.roblox.com/assets/v1/operations/{operation_id}"
-                status_response = requests.get(status_url, headers=headers)
+                status_response = with_retries(lambda: requests.get(status_url, headers=headers))
                 
                 if status_response.status_code == 200:
                     status_result = status_response.json()
@@ -90,12 +113,12 @@ def upload_asset(file_path, name, description, auth_token, creator_id, creator_t
             print(f"❌ Unexpected error: {e}")
             return None
 
-    AssetDeliveryLocation = requests.get(f"https://apis.roblox.com/asset-delivery-api/v1/assetId/{assetId}", headers=headers)
+    AssetDeliveryLocation = with_retries(lambda: requests.get(f"https://apis.roblox.com/asset-delivery-api/v1/assetId/{assetId}", headers=headers))
     if AssetDeliveryLocation.status_code != 200:
         print(f"❌ Failed to get asset delivery location: {AssetDeliveryLocation.status_code}")
         return None
     
-    XMLContentRequest = requests.get(AssetDeliveryLocation.json()["location"])
+    XMLContentRequest = with_retries(lambda: requests.get(AssetDeliveryLocation.json()["location"]))
     ContentData = ET.fromstring(XMLContentRequest.content)
 
     url_element = ContentData.find(".//Content[@name='Texture']/url")

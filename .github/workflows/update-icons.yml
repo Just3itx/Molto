@@ -82,6 +82,21 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           lune run scripts/build.luau
 
+      # Keep uploaded asset ids even when the build fails halfway, so a re-run does not upload them again
+      - name: Save upload cache
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f providers/uploads.json ]; then
+            git add providers/uploads.json
+            if ! git diff --cached --quiet; then
+              git commit -m "chore(assets): cache uploaded spritesheet ids"
+              git push
+            fi
+          fi
+
       - name: Verify fonts and loader
         run: npm test
 

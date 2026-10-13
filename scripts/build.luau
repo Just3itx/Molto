@@ -135,9 +135,18 @@ local function ResetDir(path: string)
 	fs.writeDir(path)
 end
 
+-- Uploaded sheets are remembered by content hash, so re-running a build never uploads the same image twice
+local UPLOADS_PATH = "providers/uploads.json"
+local Uploads = if fs.isFile(UPLOADS_PATH) then serde.decode("json", fs.readFile(UPLOADS_PATH)) else {}
+
 local function UploadImageAssetToRoblox(options: UploadAssetOptions): string
 	if DryRun then
 		return "0"
+	end
+
+	local FileHash = serde.hash("sha256", fs.readFile(options.path))
+	if Uploads[FileHash] then
+		return Uploads[FileHash]
 	end
 
 	assert(ROBLOX_API_TOKEN, "ROBLOX_API_TOKEN environment variable is not set")
@@ -156,6 +165,12 @@ local function UploadImageAssetToRoblox(options: UploadAssetOptions): string
 
 	local CleanedOutput = Result.stdout:gsub("\n", ""):gsub("\r", "")
 	CleanedOutput = CleanedOutput:gsub(" ", "")
+
+	Uploads[FileHash] = CleanedOutput
+	if not fs.isDir("providers") then
+		fs.writeDir("providers")
+	end
+	fs.writeFile(UPLOADS_PATH, serde.encode("json", Uploads, true))
 
 	return CleanedOutput
 end
