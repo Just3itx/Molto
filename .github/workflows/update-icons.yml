@@ -58,7 +58,7 @@ jobs:
           rm -rf rokit.toml
           rokit init
           rokit trust lune-org/lune
-          rokit add lune-org/lune
+          rokit add lune-org/lune@0.9.4
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
