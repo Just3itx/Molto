@@ -24,6 +24,7 @@ type ProviderMeta = {
 	Font: boolean,
 	FontParts: number,
 	FontPartSize: number,
+	SourceHash: string,
 }
 
 type UploadAssetOptions = {
@@ -42,6 +43,8 @@ local WORKERS = 8
 local FONT_WORKERS = 3
 -- A TrueType ligature table overflows at a few thousand icons, so big sets are split into several fonts
 local FONT_PART_SIZE = 1500
+-- Bump when the build pipeline changes in a way that alters the generated assets
+local PIPELINE_VERSION = 1
 local ICON_SETS_DIR = "build/icon-sets"
 local MANIFEST_PATH = "providers/manifest.json"
 
@@ -51,12 +54,16 @@ local LUA_KEYWORDS = {
 }
 
 --// Arguments \\--
--- usage: lune run scripts/build.luau [--dry-run] [provider ids...]
+-- usage: lune run scripts/build.luau [--dry-run] [--force] [provider ids...]
+-- Providers whose icon set and build settings did not change are skipped unless --force is given
 local DryRun = false
+local Force = false
 local RequestedProviders = {}
 for _, arg in process.args do
 	if arg == "--dry-run" then
 		DryRun = true
+	elseif arg == "--force" then
+		Force = true
 	else
 		table.insert(RequestedProviders, arg)
 	end
@@ -366,8 +373,46 @@ local function ProcessPngs(pngDir: string)
 	end)
 end
 
---// Provider build \\--
-local function BuildProvider(provider: ProviderConfig): ProviderMeta
+--// Incremental builds \\--
+local Manifest: { [string]: any } = {}
+
+-- Identifies everything that decides a provider's assets, so unchanged providers can be skipped
+local function ComputeSourceHash(provider: ProviderConfig): string
+	local setPath = `{ICON_SETS_DIR}/json/{provider.prefix}.json`
+	assert(fs.isFile(setPath), `Icon set "{provider.prefix}" not found in iconify/icon-sets`)
+
+	return serde.hash(
+		"sha256",
+		table.concat({
+			serde.hash("sha256", fs.readFile(setPath)),
+			tostring(PIPELINE_VERSION),
+			tostring(ICON_SIZE),
+			tostring(FONT_PART_SIZE),
+			tostring(provider.font ~= false),
+			provider.name or "",
+		}, "\n")
+	)
+end
+
+local function IsUpToDate(provider: ProviderConfig, hash: string): boolean
+	local meta = Manifest[provider.id]
+	if Force or not meta or meta.SourceHash ~= hash then
+		return false
+	end
+
+	-- The generated files must still exist
+	if not fs.isFile(`providers/{provider.id}.lua`) or not fs.isFile(`site/data/{provider.id}.json`) then
+		return false
+	end
+	if not fs.isDir(`spritesheets/{provider.id}`) or #fs.readDir(`spritesheets/{provider.id}`) ~= meta.Sheets then
+		return false
+	end
+
+	return (meta.Font == true) == fs.isDir(`fonts/{provider.id}`)
+end
+
+--// Provider build \--
+local function BuildProvider(provider: ProviderConfig, SourceHash: string): ProviderMeta
 	print(`\n=== Building provider "{provider.id}" ({provider.prefix}) ===`)
 
 	local svgDir = `build/svg/{provider.id}`
@@ -566,6 +611,7 @@ end]]
 		Font = FontParts > 0,
 		FontParts = FontParts,
 		FontPartSize = FONT_PART_SIZE,
+		SourceHash = SourceHash,
 	}
 end
 
@@ -573,7 +619,7 @@ end
 print("Starting Icon Registry build...")
 
 local Config = serde.decode("json", fs.readFile("providers.json"))
-local Manifest = if fs.isFile(MANIFEST_PATH) then serde.decode("json", fs.readFile(MANIFEST_PATH)) else {}
+Manifest = if fs.isFile(MANIFEST_PATH) then serde.decode("json", fs.readFile(MANIFEST_PATH)) else {}
 
 local ToBuild: { ProviderConfig } = {}
 for _, provider in Config.providers do
@@ -596,7 +642,12 @@ end
 SetupIconSets()
 
 for _, provider in ToBuild do
-	Manifest[provider.id] = BuildProvider(provider)
+	local hash = ComputeSourceHash(provider)
+	if IsUpToDate(provider, hash) then
+		print(`\n=== Skipping provider "{provider.id}", icon set unchanged ===`)
+	else
+		Manifest[provider.id] = BuildProvider(provider, hash)
+	end
 end
 
 -- Drop providers removed from providers.json

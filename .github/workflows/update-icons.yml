@@ -3,7 +3,12 @@ name: Update icon sets
 on:
   schedule:
     - cron: "0 0 1 * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild every provider even if its icon set is unchanged"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -80,7 +85,7 @@ jobs:
           ROBLOX_CREATOR_ID: ${{ secrets.ROBLOX_CREATOR_ID }}
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          lune run scripts/build.luau
+          lune run scripts/build.luau ${{ inputs.force && '--force' || '' }}
 
       # Keep uploaded asset ids even when the build fails halfway, so a re-run does not upload them again
       - name: Save upload cache
