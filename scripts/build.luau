@@ -47,7 +47,7 @@ local FONT_PART_BUDGET = 45000
 -- Bump when the build pipeline changes in a way that alters the generated assets
 local PIPELINE_VERSION = 3
 local ICON_SETS_DIR = "build/icon-sets"
-local MANIFEST_PATH = "providers/manifest.json"
+local MANIFEST_PATH = "site/providers/manifest.json"
 
 local LUA_KEYWORDS = {
 	"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "if", "in",
@@ -149,7 +149,7 @@ local function ResetDir(path: string)
 end
 
 -- Uploaded sheets are remembered by content hash, so re-running a build never uploads the same image twice
-local UPLOADS_PATH = "providers/uploads.json"
+local UPLOADS_PATH = "site/providers/uploads.json"
 local Uploads = if fs.isFile(UPLOADS_PATH) then serde.decode("json", fs.readFile(UPLOADS_PATH)) else {}
 
 local function UploadImageAssetToRoblox(options: UploadAssetOptions): string
@@ -180,8 +180,8 @@ local function UploadImageAssetToRoblox(options: UploadAssetOptions): string
 	CleanedOutput = CleanedOutput:gsub(" ", "")
 
 	Uploads[FileHash] = CleanedOutput
-	if not fs.isDir("providers") then
-		fs.writeDir("providers")
+	if not fs.isDir("site/providers") then
+		fs.writeDir("site/providers")
 	end
 	fs.writeFile(UPLOADS_PATH, serde.encode("json", Uploads, true))
 
@@ -408,14 +408,14 @@ local function IsUpToDate(provider: ProviderConfig, hash: string): boolean
 	end
 
 	-- The generated files must still exist
-	if not fs.isFile(`providers/{provider.id}.lua`) or not fs.isFile(`site/data/{provider.id}.json`) then
+	if not fs.isFile(`site/providers/{provider.id}.lua`) or not fs.isFile(`site/data/{provider.id}.json`) then
 		return false
 	end
-	if not fs.isDir(`spritesheets/{provider.id}`) or #fs.readDir(`spritesheets/{provider.id}`) ~= meta.Sheets then
+	if not fs.isDir(`site/spritesheets/{provider.id}`) or #fs.readDir(`site/spritesheets/{provider.id}`) ~= meta.Sheets then
 		return false
 	end
 
-	return (meta.Font == true) == fs.isDir(`fonts/{provider.id}`)
+	return (meta.Font == true) == fs.isDir(`site/fonts/{provider.id}`)
 end
 
 --// Fonts \\--
@@ -503,7 +503,7 @@ end]]
 	end)
 
 	local SheetIndexByTarmacId = {}
-	local SheetDir = `spritesheets/{provider.id}`
+	local SheetDir = `site/spritesheets/{provider.id}`
 	ResetDir(SheetDir)
 
 	for index, file in SheetFiles do
@@ -551,7 +551,7 @@ end]]
 	end
 
 	fs.writeFile(
-		`providers/{provider.id}.lua`,
+		`site/providers/{provider.id}.lua`,
 		"return " .. LuaEncode({ Icons = Icons, Aliases = Aliases, Rects = Rects, Sheets = Sheets })
 	)
 
@@ -559,7 +559,7 @@ end]]
 	fs.writeFile(`site/data/{provider.id}.json`, serde.encode("json", { icons = Icons, aliases = Aliases }))
 
 	-- Icon font: names shape into one glyph through an OpenType ligature. Big sets are split into parts
-	local FontDir = `fonts/{provider.id}`
+	local FontDir = `site/fonts/{provider.id}`
 	local Previous = Manifest[provider.id]
 	local FontVersions = {}
 	local FontSources = {}
@@ -687,8 +687,8 @@ assert(#ToBuild > 0, "No matching providers to build")
 if not fs.isDir("build") then
 	fs.writeDir("build")
 end
-if not fs.isDir("providers") then
-	fs.writeDir("providers")
+if not fs.isDir("site/providers") then
+	fs.writeDir("site/providers")
 end
 if not fs.isDir("site/data") then
 	fs.writeDir("site/data")
@@ -740,7 +740,7 @@ fs.writeFile("site/data/providers.json", serde.encode("json", { default = Config
 local Template = fs.readFile("scripts/assets/template.luau")
 
 fs.writeFile(
-	"source.lua",
+	"site/source.lua",
 	ReplaceScriptGlobals(Template, {
 		["DATA_PROVIDERS"] = LuaEncode(Manifest),
 		["DATA_DEFAULT_PROVIDER"] = `"{Config.default}"`,

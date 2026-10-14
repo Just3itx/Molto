@@ -1,6 +1,6 @@
 "use strict";
 
-const LOADER_URL = "https://raw.githubusercontent.com/notpoiu/Molto/refs/heads/main/source.lua";
+const LOADER_URL = "https://molto.pages.dev/source.lua";
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = (id) => document.getElementById(id);
 

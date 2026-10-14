@@ -3,15 +3,15 @@ local fs = require("@lune/fs")
 local luau = require("@lune/luau")
 local serde = require("@lune/serde")
 
-local source = fs.readFile("source.lua")
+local source = fs.readFile("site/source.lua")
 local assetBase = assert(source:match('local ASSET_BASE_URL = "([^"]+)"'))
-local manifest = serde.decode("json", fs.readFile("providers/manifest.json"))
+local manifest = serde.decode("json", fs.readFile("site/providers/manifest.json"))
 local provider = assert(source:match('local DEFAULT_PROVIDER = "([^"]+)"'))
 local meta = assert(manifest[provider])
 
 local function localPath(url: string): string
 	assert(url:sub(1, #assetBase) == assetBase, `Unexpected download: {url}`)
-	return url:sub(#assetBase + 1)
+	return "site/" .. url:sub(#assetBase + 1)
 end
 
 local function run(withFiles: boolean, badFont: boolean?)
@@ -86,7 +86,7 @@ local function run(withFiles: boolean, badFont: boolean?)
 
 			-- the font part the loader picks must be the one the build put this icon in
 			if withFiles and manifest[id].Font and not badFont then
-				local file = `fonts/{id}/{id}-{info.FontPart}.codepoints.json`
+				local file = `site/fonts/{id}/{id}-{info.FontPart}.codepoints.json`
 				if fs.isFile(file) then
 					local glyphs = serde.decode("json", fs.readFile(file)).icons
 					assert(glyphs[icon], `Icon {id}/{icon} is not in font part {info.FontPart}`)

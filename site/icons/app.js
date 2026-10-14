@@ -1,6 +1,6 @@
 "use strict";
 
-const LOADER_URL = "https://raw.githubusercontent.com/notpoiu/Molto/refs/heads/main/source.lua";
+const LOADER_URL = "https://molto.pages.dev/source.lua";
 const SET_URL = (prefix) => `https://cdn.jsdelivr.net/gh/iconify/icon-sets@master/json/${prefix}.json`;
 const CHUNK = 500;
 const SPRITE_SIZE = 24;

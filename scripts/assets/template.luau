@@ -67,7 +67,7 @@ do
 end
 
 --// Constants \\--
-local ASSET_BASE_URL = "https://raw.githubusercontent.com/notpoiu/Molto/refs/heads/main/"
+local ASSET_BASE_URL = "https://molto.pages.dev/"
 local DEFAULT_PROVIDER = DATA_DEFAULT_PROVIDER
 local PROVIDERS = DATA_PROVIDERS
 
