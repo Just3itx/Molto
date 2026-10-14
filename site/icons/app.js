@@ -242,7 +242,15 @@ function renderChunk() {
     .join("");
   el.grid.insertAdjacentHTML("beforeend", html);
   state.shown += slice.length;
+  setTimeout(fillViewport, 30);
 }
+
+// The observer only fires when the sentinel enters view, so a wide screen that a chunk does not fill would stall. Keep loading until it is filled
+function fillViewport() {
+  if (!state.data || state.shown >= state.results.length) return;
+  if (el.sentinel.getBoundingClientRect().top < window.innerHeight + 1200) renderChunk();
+}
+window.addEventListener("resize", fillViewport);
 
 function renderGrid() {
   state.results = filterResults();
