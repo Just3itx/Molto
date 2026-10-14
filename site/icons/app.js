@@ -266,16 +266,70 @@ function renderGrid() {
 }
 
 //--// Lua snippets \\--//
+const CODE_DEFAULTS = { load: true, provider: true, preload: false, style: true, format: "auto", variable: "Icons" };
+const codeEls = {
+  load: $("cg-load"), provider: $("cg-provider"), preload: $("cg-preload"), style: $("cg-style"),
+  format: $("cg-format"), variable: $("cg-var"), reset: $("cg-reset"),
+};
+const code = { ...CODE_DEFAULTS };
+try {
+  Object.assign(code, JSON.parse(localStorage.getItem("molto-code") || "{}"));
+} catch {}
+
+function syncCodeControls() {
+  for (const key of ["load", "provider", "preload", "style"]) codeEls[key].checked = code[key];
+  codeEls.format.value = code.format;
+  codeEls.variable.value = code.variable;
+}
+function saveCode() {
+  try {
+    localStorage.setItem("molto-code", JSON.stringify(code));
+  } catch {}
+}
+for (const key of ["load", "provider", "preload", "style"]) {
+  codeEls[key].addEventListener("change", () => { code[key] = codeEls[key].checked; saveCode(); });
+}
+codeEls.format.addEventListener("change", () => { code.format = codeEls.format.value; saveCode(); });
+codeEls.variable.addEventListener("input", () => {
+  const value = codeEls.variable.value.trim();
+  if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) { code.variable = value; saveCode(); }
+});
+codeEls.reset.addEventListener("click", () => {
+  Object.assign(code, CODE_DEFAULTS);
+  syncCodeControls();
+  saveCode();
+  toast("Code settings reset");
+});
+syncCodeControls();
+
 function luaFor(name, kind) {
   const { info } = state.data;
   const rgb = state.color ? hexToRgb(state.color) : [255, 255, 255];
-  const header = `local Icons = loadstring(game:HttpGet("${LOADER_URL}"))()\nIcons.SetProvider("${info.id}")`;
+  const V = code.variable;
+  // Without SetProvider the snippet names the provider on each call instead
+  const via = code.provider ? "" : `, "${info.id}"`;
+  const header = [];
 
+  if (code.load) header.push(`local ${V} = loadstring(game:HttpGet("${LOADER_URL}"))()`);
+  if (code.provider) header.push(`${V}.SetProvider("${info.id}")`);
+  if (code.preload) header.push(`${V}.PreloadAsync({ "${name}" }${via})`);
+
+  const lines = [];
   if (kind === "font") {
-    return `${header}\n\nlocal label = Instance.new("TextLabel")\nlabel.BackgroundTransparency = 1\nlabel.Size = UDim2.fromOffset(${state.size}, ${state.size})\nlabel.TextSize = ${Math.min(100, state.size)}\nlabel.TextColor3 = Color3.fromRGB(${rgb.join(", ")})\nIcons.SetIcon(label, "${name}")`;
+    lines.push(`local label = Instance.new("TextLabel")`, `label.BackgroundTransparency = 1`);
+    if (code.style) {
+      lines.push(`label.Size = UDim2.fromOffset(${state.size}, ${state.size})`, `label.TextSize = ${Math.min(100, state.size)}`, `label.TextColor3 = Color3.fromRGB(${rgb.join(", ")})`);
+    }
+    lines.push(`${V}.SetIcon(label, "${name}"${via})`);
+  } else {
+    lines.push(`local image = Instance.new("ImageLabel")`, `image.BackgroundTransparency = 1`);
+    if (code.style) {
+      lines.push(`image.Size = UDim2.fromOffset(${state.size}, ${state.size})`, `image.ImageColor3 = Color3.fromRGB(${rgb.join(", ")})`);
+    }
+    lines.push(`${V}.SetIcon(image, "${name}"${via})`);
   }
 
-  return `${header}\n\nlocal image = Instance.new("ImageLabel")\nimage.BackgroundTransparency = 1\nimage.Size = UDim2.fromOffset(${state.size}, ${state.size})\nimage.ImageColor3 = Color3.fromRGB(${rgb.join(", ")})\nIcons.SetIcon(image, "${name}")`;
+  return (header.length ? header.join("\n") + "\n\n" : "") + lines.join("\n");
 }
 
 //--// Drawer \\--//
@@ -396,7 +450,8 @@ function runAction(action) {
   switch (action) {
     case "lua":
       // Fonts are crisp at any size, so they are the default whenever the provider has one
-      return runAction(state.data.info.font ? "lua-font" : "lua-image");
+      if (code.format === "image") return runAction("lua-image");
+      return runAction(state.data.info.font && code.format !== "image" ? "lua-font" : "lua-image");
     case "lua-image":
       return copy(luaFor(name, "image"), "Lua copied");
     case "lua-font":

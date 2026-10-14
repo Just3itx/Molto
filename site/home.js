@@ -136,7 +136,7 @@ ORDER.forEach((key, i) => {
 const hub = el("g", { class: "hub" });
 el("circle", { cx: HUB.x, cy: HUB.y, r: 58 }, hub);
 glyph(hub, "lucide", HUB.x, HUB.y, 56);
-el("text", { x: HUB.x, y: HUB.y + 92, "text-anchor": "middle", fill: "currentColor", style: "fill:#f6e9df;font:700 22px 'Libre Franklin',sans-serif" }, hub).textContent = "Molto";
+el("text", { x: HUB.x, y: HUB.y + 92, "text-anchor": "middle", fill: "currentColor", style: "fill:#f3ede4;font:700 22px 'Libre Franklin',sans-serif" }, hub).textContent = "Molto";
 
 ORDER.forEach((key, i) => {
   const s = SPOTS[i];
