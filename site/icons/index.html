@@ -61,7 +61,7 @@
       <div class="ctl switch"><label for="cg-style">Apply size and color</label><input id="cg-style" type="checkbox" role="switch"></div>
 
       <div class="ctl">
-        <label for="cg-format">Copy Lua as</label>
+        <label for="cg-format">Copy Luau as</label>
         <select id="cg-format" class="field">
           <option value="auto">Font when available</option>
           <option value="font">Font (TextLabel)</option>
@@ -124,13 +124,13 @@
 
     <div class="d-actions">
       <div class="split">
-        <button class="btn primary main" id="b-lua" type="button">Copy Lua</button>
-        <button class="btn primary caret" type="button" data-menu="m-lua" aria-label="More Lua options" aria-haspopup="menu" aria-expanded="false">
+        <button class="btn primary main" id="b-lua" type="button">Copy Luau</button>
+        <button class="btn primary caret" type="button" data-menu="m-lua" aria-label="More Luau options" aria-haspopup="menu" aria-expanded="false">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
         </button>
         <div class="menu" id="m-lua" role="menu" hidden>
-          <button type="button" role="menuitem" data-act="lua-font" id="mi-font">Copy Lua (TextLabel, font)</button>
-          <button type="button" role="menuitem" data-act="lua-image">Copy Lua (ImageLabel, sprite)</button>
+          <button type="button" role="menuitem" data-act="lua-font" id="mi-font">Copy Luau (TextLabel, font)</button>
+          <button type="button" role="menuitem" data-act="lua-image">Copy Luau (ImageLabel, sprite)</button>
           <button type="button" role="menuitem" data-act="name">Copy name</button>
         </div>
       </div>
@@ -157,6 +157,6 @@
 </section>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>

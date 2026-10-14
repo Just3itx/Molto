@@ -455,9 +455,9 @@ function runAction(action) {
       if (code.format === "image") return runAction("lua-image");
       return runAction(state.data.info.font && code.format !== "image" ? "lua-font" : "lua-image");
     case "lua-image":
-      return copy(luaFor(name, "image"), "Lua copied");
+      return copy(luaFor(name, "image"), "Luau copied");
     case "lua-font":
-      return copy(luaFor(name, "font"), "Font Lua copied");
+      return copy(luaFor(name, "font"), "Font Luau copied");
     case "name":
       return copy(name, "Name copied");
     case "svg":
