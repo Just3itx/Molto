@@ -269,13 +269,13 @@ function renderGrid() {
 function luaFor(name, kind) {
   const { info } = state.data;
   const rgb = state.color ? hexToRgb(state.color) : [255, 255, 255];
-  const header = `local Icons = loadstring(game:HttpGet("${LOADER_URL}"))()\nIcons.SetProvider("${info.id}")\n\nlocal icon = Icons.GetAsset("${name}")`;
+  const header = `local Icons = loadstring(game:HttpGet("${LOADER_URL}"))()\nIcons.SetProvider("${info.id}")`;
 
   if (kind === "font") {
-    return `${header}\n\nlocal label = Instance.new("TextLabel")\nlabel.BackgroundTransparency = 1\nlabel.Size = UDim2.fromOffset(${state.size}, ${state.size})\nlabel.TextSize = ${Math.min(100, state.size)}\nlabel.TextColor3 = Color3.fromRGB(${rgb.join(", ")})\nlabel.FontFace = icon.FontFace -- nil when the executor can't load fonts\nlabel.Text = icon.Text`;
+    return `${header}\n\nlocal label = Instance.new("TextLabel")\nlabel.BackgroundTransparency = 1\nlabel.Size = UDim2.fromOffset(${state.size}, ${state.size})\nlabel.TextSize = ${Math.min(100, state.size)}\nlabel.TextColor3 = Color3.fromRGB(${rgb.join(", ")})\nIcons.SetIcon(label, "${name}")`;
   }
 
-  return `${header}\n\nlocal image = Instance.new("ImageLabel")\nimage.BackgroundTransparency = 1\nimage.Size = UDim2.fromOffset(${state.size}, ${state.size})\nimage.ImageColor3 = Color3.fromRGB(${rgb.join(", ")})\nimage.Image = icon.Url\nimage.ImageRectSize = icon.ImageRectSize\nimage.ImageRectOffset = icon.ImageRectOffset`;
+  return `${header}\n\nlocal image = Instance.new("ImageLabel")\nimage.BackgroundTransparency = 1\nimage.Size = UDim2.fromOffset(${state.size}, ${state.size})\nimage.ImageColor3 = Color3.fromRGB(${rgb.join(", ")})\nIcons.SetIcon(image, "${name}")`;
 }
 
 //--// Drawer \\--//
