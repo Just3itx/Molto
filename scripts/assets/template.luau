@@ -242,15 +242,49 @@ function Registry.HasIcon(name: string, provider: string?): boolean
 	return Registry.GetAsset(name, provider) ~= nil
 end
 
-function Registry.GetAsset(name: string, provider: string?)
-	local state = LoadProvider(provider or currentProvider)
-
+local function Resolve(state: ProviderState, name: string): string
 	local resolved = name
 	for _ = 1, MAX_ALIAS_DEPTH do
 		local target = state.Aliases[resolved]
 		if not target then break end
 		resolved = target
 	end
+	return resolved
+end
+
+-- Downloads everything up front so GetAsset never yields. Without names it fetches every font part of the provider.
+-- Returns the number of font parts that are ready
+function Registry.PreloadAsync(names: { string }?, provider: string?): number
+	local state = LoadProvider(provider or currentProvider)
+	if not state.FontParts then return 0 end
+
+	local parts: { [number]: boolean } = {}
+	if names then
+		for _, name in names do
+			local resolved = Resolve(state, name)
+			if state.Index[resolved] then
+				parts[FontPartOf(resolved, state.FontParts)] = true
+			end
+		end
+	else
+		for part = 1, state.FontParts do
+			parts[part] = true
+		end
+	end
+
+	local ready = 0
+	for part in parts do
+		if GetFontFace(state, part) then
+			ready += 1
+		end
+	end
+	return ready
+end
+
+function Registry.GetAsset(name: string, provider: string?)
+	local state = LoadProvider(provider or currentProvider)
+
+	local resolved = Resolve(state, name)
 
 	local position = state.Index[resolved]
 	if not position then

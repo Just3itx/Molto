@@ -93,6 +93,14 @@ local function run(withFiles: boolean, badFont: boolean?)
 			end
 		end
 	end
+	-- PreloadAsync fetches only the parts the names need, or all of them without names
+	local preloaded = registry.PreloadAsync({ name, "not-an-icon" }, provider)
+	if withFiles and meta.Font and not badFont then
+		assert(preloaded == 1, "Preload of one icon readies one part")
+		assert(registry.PreloadAsync(nil, provider) == meta.FontParts, "Preload of everything readies every part")
+	else
+		assert(preloaded == 0, "Preload without a usable font readies nothing")
+	end
 	assert(not pcall(registry.SetProvider, "nope"))
 end
 
