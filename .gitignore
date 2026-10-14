@@ -6,3 +6,5 @@ tarmac.toml
 .luaurc
 .env
 node_modules/
+.claude/
+.taste-skill/

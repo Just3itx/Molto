@@ -4,83 +4,224 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Molto: Icon Registry for Roblox</title>
-<meta name="description" content="One loader for Lucide, Tabler, Heroicons, Phosphor and Fluent icons in Roblox executors. Switch providers with one line.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ff8a3d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="base.css">
+<meta name="description" content="One loader for Lucide, Tabler, Heroicons, Phosphor and Fluent icons in Roblox executors. Ask for a name, get a sprite or a font glyph, switch sets in one line.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23050f16' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="home.css">
+<script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
-<header class="nav">
-  <a class="brand" href="./" aria-label="Molto home">
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-    <span>Molto</span>
-  </a>
-  <nav>
-    <a href="#usage">Usage</a>
+
+<header class="top" id="top">
+  <a class="mark" href="./" aria-label="Molto home">Molto</a>
+  <nav aria-label="Main">
+    <a href="#how">How it works</a>
     <a href="#providers">Providers</a>
+    <a href="icons/">Icons</a>
     <a href="https://github.com/notpoiu/Molto" rel="noopener">GitHub</a>
-    <a class="pill-link" href="icons/">Browse icons</a>
   </nav>
 </header>
 
 <main>
-  <section class="hero">
+  <section class="hero" aria-labelledby="h1">
+    <div class="moon" id="moon" aria-hidden="true">
+      <svg id="moon-svg" viewBox="0 0 24 24" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+    </div>
+
     <div class="hero-copy">
-      <p class="kicker">Icon registry for Roblox executors</p>
-      <h1>Same icon name.<br>Five <mark>icon sets</mark>.</h1>
-      <p class="lead">
-        Ask for <code>"moon"</code> and get back a sprite rect or a font glyph from whichever provider you picked.
-        Changing providers is one line.
-      </p>
-      <div class="cta">
-        <a class="btn primary" href="icons/">Browse icons</a>
-        <button class="btn" id="copy-loader" type="button">Copy loader</button>
+      <h1 id="h1">One name.<br>Five sets.</h1>
+      <p class="lead">Ask for <code>moon</code> and get its sprite or font glyph from Lucide, Tabler, Heroicons, Phosphor or Fluent. Switching sets is one line.</p>
+      <a class="btn" href="icons/">Browse icons</a>
+
+      <div class="sets" id="sets" role="group" aria-label="Show the moon in a provider">
+        <button type="button" data-set="lucide" aria-pressed="true">Lucide</button>
+        <button type="button" data-set="tabler" aria-pressed="false">Tabler</button>
+        <button type="button" data-set="heroicons" aria-pressed="false">Heroicons</button>
+        <button type="button" data-set="ph" aria-pressed="false">Phosphor</button>
+        <button type="button" data-set="fluent" aria-pressed="false">Fluent</button>
       </div>
-      <p class="count" id="count" hidden></p>
-    </div>
-
-    <div class="stage" aria-label="Provider preview">
-      <div class="tabs" id="tabs" role="tablist" aria-label="Provider"></div>
-      <div class="swatch" id="swatch" role="listbox" aria-label="Sample icons"></div>
-      <pre class="code"><code id="code"></code></pre>
+      <pre class="readout"><code id="readout">Icons.SetProvider("lucide")
+Icons.GetAsset("moon")</code></pre>
     </div>
   </section>
 
-  <section class="band" id="usage">
-    <h2>Usage</h2>
-    <div class="band-body">
-      <p>Load the registry once. It fetches providers lazily, so nothing downloads until you ask for an icon.</p>
-      <pre class="block"><code><span class="k">local</span> Icons = <span class="f">loadstring</span>(game:<span class="f">HttpGet</span>(<span class="s" id="loader-url"></span>))()
+  <section class="strip" id="how" aria-labelledby="how-h">
+    <article class="field f1">
+      <h2 id="how-h">Four steps to an icon.</h2>
+      <div class="card" data-ui>
+        <p class="card-title">Lookup</p>
+        <dl>
+          <div><dt>Registry</dt><dd>loaded</dd></div>
+          <div><dt>Provider</dt><dd class="blank">none</dd></div>
+          <div><dt>Name</dt><dd class="blank">none</dd></div>
+          <div><dt>Asset</dt><dd class="blank">none</dd></div>
+        </dl>
+      </div>
+      <p class="clause">First you load it.</p>
+    </article>
+    <article class="field f2">
+      <div class="card" data-ui>
+        <p class="card-title">Lookup</p>
+        <dl>
+          <div><dt>Registry</dt><dd>loaded</dd></div>
+          <div><dt>Provider</dt><dd>tabler</dd></div>
+          <div><dt>Name</dt><dd class="blank">none</dd></div>
+          <div><dt>Asset</dt><dd class="blank">none</dd></div>
+        </dl>
+      </div>
+      <p class="clause">Then you pick a set.</p>
+    </article>
+    <article class="field f3">
+      <div class="card" data-ui>
+        <p class="card-title">Lookup</p>
+        <dl>
+          <div><dt>Registry</dt><dd>loaded</dd></div>
+          <div><dt>Provider</dt><dd>tabler</dd></div>
+          <div><dt>Name</dt><dd>moon</dd></div>
+          <div><dt>Asset</dt><dd class="blank">none</dd></div>
+        </dl>
+      </div>
+      <p class="clause">Then you ask for a name.</p>
+    </article>
+    <article class="field f4">
+      <div class="card" data-ui>
+        <p class="card-title">Lookup</p>
+        <dl>
+          <div><dt>Registry</dt><dd>loaded</dd></div>
+          <div><dt>Provider</dt><dd>tabler</dd></div>
+          <div><dt>Name</dt><dd>moon</dd></div>
+          <div><dt>Asset</dt><dd>24 × 24 sprite, font glyph</dd></div>
+        </dl>
+      </div>
+      <p class="clause">Then you use what comes back.</p>
+    </article>
+  </section>
 
-Icons.<span class="f">SetProvider</span>(<span class="s">"tabler"</span>)                 <span class="c">-- every later lookup uses tabler</span>
-<span class="k">local</span> a = Icons.<span class="f">GetAsset</span>(<span class="s">"moon"</span>)
-<span class="k">local</span> b = Icons.<span class="f">GetAsset</span>(<span class="s">"moon"</span>, <span class="s">"lucide"</span>)  <span class="c">-- or pick per lookup</span></code></pre>
+  <section class="switches" aria-label="What the registry does">
+    <div class="sw on" data-tone="pale">
+      <p class="sw-text">Switch sets without reloading.</p>
+      <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Switch sets without reloading" data-ui><span></span></button>
+      <p class="sw-more">A provider loads once on first use. After that every lookup is a table read.</p>
+    </div>
+    <div class="sw on" data-tone="white">
+      <p class="sw-text">Download only what you use.</p>
+      <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Download only what you use" data-ui><span></span></button>
+      <p class="sw-more">An unused set costs nothing. Fluent alone is 20,289 icons and never loads unless you ask.</p>
+    </div>
+    <div class="sw" data-tone="ink">
+      <p class="sw-text">Fonts stay sharp at any size.</p>
+      <button class="toggle" type="button" role="switch" aria-checked="false" aria-label="Fonts stay sharp at any size" data-ui><span></span></button>
+      <p class="sw-more">A font glyph is one TextLabel, crisp up to TextSize 100. A sprite is 24 pixels.</p>
+    </div>
+    <div class="sw" data-tone="tone">
+      <p class="sw-text">Builds cache on disk.</p>
+      <button class="toggle" type="button" role="switch" aria-checked="false" aria-label="Builds cache on disk" data-ui><span></span></button>
+      <p class="sw-more">Sheets and fonts are stored per build hash, and older builds are pruned.</p>
+    </div>
+    <div class="sw" data-tone="pale">
+      <p class="sw-text">Old names keep working.</p>
+      <button class="toggle" type="button" role="switch" aria-checked="false" aria-label="Old names keep working" data-ui><span></span></button>
+      <p class="sw-more">A renamed icon resolves through its alias to the real one.</p>
     </div>
   </section>
 
-  <section class="band">
-    <h2>What you get back</h2>
-    <div class="band-body">
-      <dl class="fields">
-        <div><dt>Url</dt><dd>The spritesheet. Cached to disk when the executor can, otherwise an uploaded Roblox asset.</dd></div>
-        <div><dt>ImageRectSize<br>ImageRectOffset</dt><dd>Where the icon sits on that sheet. Assign all three to an <code>ImageLabel</code>.</dd></div>
-        <div><dt>FontFace<br>Text</dt><dd>The same icon as a font glyph, crisp at any <code>TextSize</code> up to 100. <code>nil</code> when fonts are unavailable.</dd></div>
-      </dl>
-      <p class="note">Icon names follow each set's own convention, so <code>moon</code> in Lucide is <code>weather-moon-24-regular</code> in Fluent. Renamed icons keep working through aliases.</p>
-    </div>
+  <section class="moons" aria-label="The moon">
+    <p class="statement">Galileo drew the moon through a telescope in 1610. Molto draws it five ways.</p>
+    <ul class="discs">
+      <li>
+        <img src="assets/moon-photo.webp" width="1400" height="1401" alt="The full moon, grey seas and bright rayed craters" loading="lazy">
+      </li>
+      <li>
+        <video muted loop playsinline preload="metadata" poster="assets/moon-rotation-poster.webp" aria-label="One rotation of the moon recorded by NASA's lunar orbiter" id="rotation">
+          <source src="assets/moon-rotation.webm" type="video/webm">
+        </video>
+      </li>
+      <li>
+        <img src="assets/moon-map.webp" width="1400" height="1306" alt="An old engraved map of the moon's surface with named seas" loading="lazy">
+      </li>
+      <li>
+        <img src="assets/solar-system.webp" width="1400" height="1738" alt="A Victorian engraving of the orbits of the planets around the sun" loading="lazy">
+      </li>
+    </ul>
   </section>
 
-  <section class="band" id="providers">
-    <h2>Providers</h2>
-    <div class="band-body">
-      <ul class="rows" id="rows"><li class="muted">Loading providers…</li></ul>
+  <section class="providers" id="providers" aria-labelledby="providers-h">
+    <h2 id="providers-h">Five sets, one registry.</h2>
+    <p class="word">providers</p>
+    <ul class="table" id="rows">
+      <li><a href="icons/#lucide"><span class="kind">ISC</span><span class="who">Lucide</span><span class="num">1,949<small>icons</small></span><span class="go" aria-hidden="true">→</span></a></li>
+      <li><a href="icons/#tabler"><span class="kind">MIT</span><span class="who">Tabler</span><span class="num">6,286<small>icons</small></span><span class="go" aria-hidden="true">→</span></a></li>
+      <li><a href="icons/#heroicons"><span class="kind">MIT</span><span class="who">Heroicons</span><span class="num">1,288<small>icons</small></span><span class="go" aria-hidden="true">→</span></a></li>
+      <li><a href="icons/#phosphor"><span class="kind">MIT</span><span class="who">Phosphor</span><span class="num">9,161<small>icons</small></span><span class="go" aria-hidden="true">→</span></a></li>
+      <li><a href="icons/#fluent"><span class="kind">MIT</span><span class="who">Fluent UI</span><span class="num">20,289<small>icons</small></span><span class="go" aria-hidden="true">→</span></a></li>
+    </ul>
+    <figure class="arch">
+      <img src="assets/galileo.webp" width="1800" height="1197" alt="Galileo's own drawings of the moon in the 1610 Sidereus Nuncius, a facsimile open at two engraved moons" loading="lazy">
+    </figure>
+  </section>
+
+  <section class="reach" aria-labelledby="reach-h">
+    <h2 id="reach-h" class="ask">Which sets do you load?</h2>
+    <div class="chips" id="chips" role="group" aria-label="Sets to load" data-ui>
+      <button type="button" aria-pressed="true" data-count="1949">Lucide</button>
+      <button type="button" aria-pressed="true" data-count="6286">Tabler</button>
+      <button type="button" aria-pressed="false" data-count="1288">Heroicons</button>
+      <button type="button" aria-pressed="false" data-count="9161">Phosphor</button>
+      <button type="button" aria-pressed="false" data-count="20289">Fluent</button>
     </div>
+    <p class="figure"><output id="figure" for="chips">8,235</output><span>icons</span></p>
+    <p class="how">Each set's icon count, added up for the sets you pick. Sets you leave out are never downloaded.</p>
+  </section>
+
+  <section class="start" aria-labelledby="start-h">
+    <div class="start-copy">
+      <h2 id="start-h">Start with moon.</h2>
+      <p>The button copies a snippet that loads the registry and looks up the name you typed. Paste it into your executor.</p>
+    </div>
+    <form class="dialog" id="dialog" data-ui>
+      <p class="dialog-title">Copy the loader</p>
+      <label for="name">Icon name</label>
+      <input id="name" name="name" value="moon" autocomplete="off" spellcheck="false">
+      <fieldset>
+        <legend>Provider</legend>
+        <div class="seg" id="seg">
+          <label><input type="radio" name="p" value="lucide" checked><span>Lucide</span></label>
+          <label><input type="radio" name="p" value="tabler"><span>Tabler</span></label>
+          <label><input type="radio" name="p" value="heroicons"><span>Heroicons</span></label>
+          <label><input type="radio" name="p" value="phosphor"><span>Phosphor</span></label>
+          <label><input type="radio" name="p" value="fluent"><span>Fluent</span></label>
+        </div>
+      </fieldset>
+      <button class="primary" type="submit">Copy Lua</button>
+    </form>
   </section>
 </main>
 
-<footer>
-  <span>Icons come from <a href="https://github.com/iconify/icon-sets" rel="noopener">iconify/icon-sets</a> and keep their own licenses.</span>
-  <a href="https://github.com/notpoiu/Molto" rel="noopener">notpoiu/Molto</a>
+<footer class="foot">
+  <div class="blocks" aria-label="Molto">
+    <span style="--h:100%;--c:var(--ink)">M</span><span style="--h:78%;--c:var(--ground)">O</span><span style="--h:92%;--c:var(--white)">L</span><span style="--h:66%;--c:var(--pale)">T</span><span style="--h:84%;--c:var(--tone)">O</span>
+  </div>
+  <div class="foot-grid">
+    <ul class="links">
+      <li><a href="icons/">Browse icons</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#providers">Providers</a></li>
+      <li><a href="https://github.com/notpoiu/Molto" rel="noopener">GitHub</a></li>
+    </ul>
+    <ul class="credits">
+      <li>Icon sets from <a href="https://github.com/iconify/icon-sets" rel="noopener">iconify/icon-sets</a>, each under its own licence.</li>
+      <li>Full moon: Gregory H. Revera, <a href="https://commons.wikimedia.org/w/index.php?curid=45271877" rel="noopener">CC BY-SA 3.0</a>, via Wikimedia Commons.</li>
+      <li>Moon rotation: NASA LROC, public domain, <a href="https://commons.wikimedia.org/wiki/File:LROC_wac_643nm_Moon_rotation1080px.ogv" rel="noopener">via Wikimedia Commons</a>.</li>
+      <li>Moon map and orbit engravings: Wellcome Collection, <a href="https://commons.wikimedia.org/w/index.php?curid=36572030" rel="noopener">CC BY 4.0</a>.</li>
+      <li>Sidereus Nuncius facsimile, Museo Galileo: Zde, <a href="https://commons.wikimedia.org/wiki/File:Galileo_Galilei,_Sidericus_Nuncius,_facsimile,_Museo_Galileo,_Florence,_224095r.jpg" rel="noopener">CC BY-SA 4.0</a>.</li>
+    </ul>
+  </div>
+  <div class="foot-end">
+    <span>Molto</span>
+    <a class="small" href="#top" id="top-link">Back to top</a>
+  </div>
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
