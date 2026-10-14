@@ -2,6 +2,8 @@
   "fluent": {
     "Count": 20289,
     "Font": false,
+    "FontPartSize": 1500,
+    "FontParts": 0,
     "Hash": "147c6982e1add2de0edee16ee9b04eed24e29eab03bcaa6f4057606590981f14",
     "License": "MIT",
     "Name": "Fluent UI",
@@ -10,7 +12,9 @@
   "heroicons": {
     "Count": 1288,
     "Font": true,
-    "Hash": "d906f435e3ff112e424c35bef961eac2f204dd9ed9526de86514c11f0980192a",
+    "FontPartSize": 1500,
+    "FontParts": 1,
+    "Hash": "711ade2a9a57e4ac56b87a95821222319f0e38dc552f30522be69e5d95ca2653",
     "License": "MIT",
     "Name": "Heroicons",
     "Sheets": 2
@@ -18,23 +22,29 @@
   "lucide": {
     "Count": 1949,
     "Font": true,
-    "Hash": "7c7e6a0b7c310227eef7657af5667ec6affea80bc40379a02da663b784e0113a",
+    "FontPartSize": 1500,
+    "FontParts": 2,
+    "Hash": "df89ed6afa208f5822f48e11a939c09ad848a803677200765052d6676804ec92",
     "License": "ISC",
     "Name": "Lucide",
     "Sheets": 3
   },
   "phosphor": {
     "Count": 9161,
-    "Font": false,
-    "Hash": "466ebef9aa795c36e52848cfe6e8490e96101afabda379f9f59332561ccbb8cb",
+    "Font": true,
+    "FontPartSize": 1500,
+    "FontParts": 7,
+    "Hash": "25c6bb8954fd67bb31f1e3a205f1b23a431943a260006da71efb1095f286a519",
     "License": "MIT",
     "Name": "Phosphor",
     "Sheets": 12
   },
   "tabler": {
     "Count": 6286,
-    "Font": false,
-    "Hash": "c566e59434f03b405de969b5c63628f4a4ab9712cb8b7258653fbe65e4e72f7e",
+    "Font": true,
+    "FontPartSize": 1500,
+    "FontParts": 5,
+    "Hash": "953eab1a483d7d923d2d885572bc440dc71328a6d684a83f18989ea1f91e28fb",
     "License": "MIT",
     "Name": "Tabler",
     "Sheets": 8
