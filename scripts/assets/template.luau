@@ -340,4 +340,22 @@ function Registry.GetAsset(name: string, provider: string?)
 	}
 end
 
+function Registry.SetIcon(iconInstance: TextLabel | ImageLabel, name: string, provider: string?)
+	assert(typeof(iconInstance) == "Instance" and (iconInstance:IsA("TextLabel") or iconInstance:IsA("ImageLabel")), "iconInstance must be a TextLabel or ImageLabel")
+	
+	local asset = Registry.GetAsset(name, provider)
+	assert(asset, `Icon "{name}" not found in provider "{provider}"`)
+
+	if iconInstance:IsA("TextLabel") then
+		assert(asset.FontFace, "Environment does not support font icons. Try using an ImageLabel instead.")
+
+		iconInstance.Text = asset.Text
+		iconInstance.FontFace = asset.FontFace
+	else
+		iconInstance.Image = asset.Url
+		iconInstance.ImageRectSize = asset.ImageRectSize
+		iconInstance.ImageRectOffset = asset.ImageRectOffset
+	end
+end
+
 return Registry
