@@ -72,6 +72,7 @@ local DEFAULT_PROVIDER = DATA_DEFAULT_PROVIDER
 local PROVIDERS = DATA_PROVIDERS
 
 local MAX_ALIAS_DEPTH = 8
+local PRELOAD_WORKERS = 6
 
 --// Providers \\--
 type ProviderState = {
@@ -258,25 +259,55 @@ function Registry.PreloadAsync(names: { string }?, provider: string?): number
 	local state = LoadProvider(provider or currentProvider)
 	if not state.FontParts then return 0 end
 
-	local parts: { [number]: boolean } = {}
+	local seen: { [number]: boolean } = {}
+	local queue: { number } = {}
+	local function Add(part: number)
+		if not seen[part] then
+			seen[part] = true
+			table.insert(queue, part)
+		end
+	end
+
 	if names then
 		for _, name in names do
 			local resolved = Resolve(state, name)
 			if state.Index[resolved] then
-				parts[FontPartOf(resolved, state.FontParts)] = true
+				Add(FontPartOf(resolved, state.FontParts))
 			end
 		end
 	else
 		for part = 1, state.FontParts do
-			parts[part] = true
+			Add(part)
 		end
 	end
 
 	local ready = 0
-	for part in parts do
-		if GetFontFace(state, part) then
-			ready += 1
+	local function Work()
+		while true do
+			local part = table.remove(queue)
+			if not part then return end
+			if GetFontFace(state, part) then
+				ready += 1
+			end
 		end
+	end
+
+	-- Several parts download at once, the rest of the queue is picked up as workers finish
+	local workers = math.min(PRELOAD_WORKERS, #queue)
+	if typeof(task) ~= "table" or workers <= 1 then
+		Work()
+		return ready
+	end
+
+	local running = workers
+	for _ = 1, workers do
+		task.spawn(function()
+			pcall(Work)
+			running -= 1
+		end)
+	end
+	while running > 0 do
+		task.wait()
 	end
 	return ready
 end

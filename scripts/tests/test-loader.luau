@@ -19,6 +19,7 @@ local function run(withFiles: boolean, badFont: boolean?)
 	local face = {}
 	local files, folders = {}, { ["molto-icons"] = true }
 	local environment = table.clone(base)
+	environment.task = task
 	environment.loadstring = function(code) return luau.load(code, { environment = environment }) end
 	environment.Font = { new = function() return face end }
 	environment.game = {
@@ -100,6 +101,9 @@ local function run(withFiles: boolean, badFont: boolean?)
 		assert(registry.PreloadAsync(nil, provider) == meta.FontParts, "Preload of everything readies every part")
 	else
 		assert(preloaded == 0, "Preload without a usable font readies nothing")
+	end
+	if withFiles and not badFont and manifest.fluent and manifest.fluent.Font then
+		assert(registry.PreloadAsync(nil, "fluent") == manifest.fluent.FontParts, "Parallel preload readies every part")
 	end
 	assert(not pcall(registry.SetProvider, "nope"))
 end
