@@ -67,9 +67,9 @@ do
 end
 
 --// Constants \\--
-local ASSET_BASE_URL = "https://raw.githubusercontent.com/notpoiu/Molto/8d04d3252da4069dee8cb6455088f2e213bc2101/"
+local ASSET_BASE_URL = "https://raw.githubusercontent.com/notpoiu/Molto/d20425dafc9af10042f3a9455e7f561b8d021746/"
 local DEFAULT_PROVIDER = "lucide"
-local PROVIDERS = {lucide={Hash="7c7e6a0b7c310227eef7657af5667ec6affea80bc40379a02da663b784e0113a",Font=true,Name="Lucide",License="ISC",Count=1949,Sheets=3},tabler={Hash="c566e59434f03b405de969b5c63628f4a4ab9712cb8b7258653fbe65e4e72f7e",Font=false,Name="Tabler",License="MIT",Count=6286,Sheets=8},heroicons={Hash="d906f435e3ff112e424c35bef961eac2f204dd9ed9526de86514c11f0980192a",Font=true,Name="Heroicons",License="MIT",Count=1288,Sheets=2},fluent={Hash="147c6982e1add2de0edee16ee9b04eed24e29eab03bcaa6f4057606590981f14",Font=false,Name="Fluent UI",License="MIT",Count=20289,Sheets=26},phosphor={Hash="466ebef9aa795c36e52848cfe6e8490e96101afabda379f9f59332561ccbb8cb",Font=false,Name="Phosphor",License="MIT",Count=9161,Sheets=12}}
+local PROVIDERS = {lucide={Hash="df89ed6afa208f5822f48e11a939c09ad848a803677200765052d6676804ec92",Font=true,Name="Lucide",FontPartSize=1500,Sheets=3,License="ISC",Count=1949,FontParts=2},tabler={Hash="953eab1a483d7d923d2d885572bc440dc71328a6d684a83f18989ea1f91e28fb",Font=true,Name="Tabler",FontPartSize=1500,Sheets=8,License="MIT",Count=6286,FontParts=5},heroicons={Hash="711ade2a9a57e4ac56b87a95821222319f0e38dc552f30522be69e5d95ca2653",Font=true,Name="Heroicons",FontPartSize=1500,Sheets=2,License="MIT",Count=1288,FontParts=1},fluent={Hash="147c6982e1add2de0edee16ee9b04eed24e29eab03bcaa6f4057606590981f14",Font=false,Name="Fluent UI",FontPartSize=1500,Sheets=26,License="MIT",Count=20289,FontParts=0},phosphor={Hash="25c6bb8954fd67bb31f1e3a205f1b23a431943a260006da71efb1095f286a519",Font=true,Name="Phosphor",FontPartSize=1500,Sheets=12,License="MIT",Count=9161,FontParts=7}}
 
 local MAX_ALIAS_DEPTH = 8
 
@@ -81,7 +81,10 @@ type ProviderState = {
 	Rects: { { any } },
 	Index: { [string]: number },
 	SheetUrls: { [number]: string },
-	FontFace: Font?,
+	Folder: string,
+	FontPartSize: number?,
+	FontName: string,
+	Fonts: { [number]: Font | false },
 }
 
 local loadedProviders: { [string]: ProviderState } = {}
@@ -137,28 +140,6 @@ local function LoadProvider(id: string): ProviderState
 		end
 	end
 
-	local fontFace: Font? = nil
-	if meta.Font and AssetManager.Supported then
-		pcall(function()
-			local ttfFile = `{folder}/font.ttf`
-			local familyFile = `{folder}/font.json`
-
-			AssetManager.EnsureFolder(folder)
-			AssetManager.Download(ttfFile, `{ASSET_BASE_URL}fonts/{id}/{id}.ttf`, function(data)
-				return data:sub(1, 4) == "\0\1\0\0" -- TrueType header
-			end)
-			AssetManager.Write(familyFile, game:GetService("HttpService"):JSONEncode({
-				name = meta.Name,
-				loadStrategy = "sameFamilyOnly",
-				faces = {
-					{ name = "Regular", weight = 400, style = "normal", assetId = AssetManager.GetAsset(ttfFile) },
-				},
-			}))
-
-			fontFace = Font.new(AssetManager.GetAsset(familyFile))
-		end)
-	end
-
 	local data = loadstring(source or game:HttpGet(dataUrl))()
 
 	local sheetUrls = {}
@@ -178,14 +159,48 @@ local function LoadProvider(id: string): ProviderState
 		Rects = data.Rects,
 		Index = index,
 		SheetUrls = sheetUrls,
-		FontFace = fontFace,
+		Folder = folder,
+		FontPartSize = if meta.Font then meta.FontPartSize else nil,
+		FontName = meta.Name,
+		Fonts = {},
 	}
 
 	loadedProviders[id] = state
 	return state
 end
 
---// API \\--
+-- Big sets are split into several fonts, so a font is downloaded when its first icon is looked up
+local function GetFontFace(state: ProviderState, part: number): Font?
+	local cached = state.Fonts[part]
+	if cached ~= nil then return cached or nil end
+
+	local face: Font? = nil
+	if AssetManager.Supported then
+		pcall(function()
+			local ttfFile = `{state.Folder}/font-{part}.ttf`
+			local familyFile = `{state.Folder}/font-{part}.json`
+
+			AssetManager.EnsureFolder(state.Folder)
+			AssetManager.Download(ttfFile, `{ASSET_BASE_URL}fonts/{state.Id}/{state.Id}-{part}.ttf`, function(data)
+				return data:sub(1, 4) == "\0\1\0\0" -- TrueType header
+			end)
+			AssetManager.Write(familyFile, game:GetService("HttpService"):JSONEncode({
+				name = `{state.FontName} {part}`,
+				loadStrategy = "sameFamilyOnly",
+				faces = {
+					{ name = "Regular", weight = 400, style = "normal", assetId = AssetManager.GetAsset(ttfFile) },
+				},
+			}))
+
+			face = Font.new(AssetManager.GetAsset(familyFile))
+		end)
+	end
+
+	state.Fonts[part] = face or false
+	return face
+end
+
+--// API \--
 Registry.Providers = {}
 for id in PROVIDERS do
 	table.insert(Registry.Providers, id)
@@ -234,6 +249,8 @@ function Registry.GetAsset(name: string, provider: string?)
 	end
 
 	local rect = state.Rects[position]
+	local fontFace = if state.FontPartSize then GetFontFace(state, math.ceil(position / state.FontPartSize)) else nil
+
 	return {
 		IconName = name,
 		Provider = state.Id,
@@ -242,8 +259,8 @@ function Registry.GetAsset(name: string, provider: string?)
 		ImageRectOffset = Vector2.new(rect[3][1], rect[3][2]),
 
 		-- Only present when the provider font loaded. The font shapes Text into one icon through a ligature
-		FontFace = state.FontFace,
-		Text = if state.FontFace then resolved else nil,
+		FontFace = fontFace,
+		Text = if fontFace then resolved else nil,
 	}
 end
 
