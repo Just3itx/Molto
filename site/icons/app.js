@@ -2,37 +2,36 @@
 
 const LOADER_URL = "https://raw.githubusercontent.com/notpoiu/Molto/refs/heads/main/source.lua";
 const SET_URL = (prefix) => `https://cdn.jsdelivr.net/gh/iconify/icon-sets@master/json/${prefix}.json`;
-const CHUNK = 400;
+const CHUNK = 500;
 const SPRITE_SIZE = 24;
+const DEFAULTS = { color: null, stroke: null, size: 24, nss: false };
 
 const $ = (id) => document.getElementById(id);
 const el = {
-  providers: $("providers"), grid: $("grid"), status: $("status"), sentinel: $("sentinel"), search: $("search"),
-  color: $("color"), colorReset: $("color-reset"), stroke: $("stroke"), strokeOut: $("stroke-out"), strokeTool: $("stroke-tool"),
-  detail: $("detail"), dName: $("d-name"), dPreview: $("d-preview"), dHint: $("d-hint"), dSize: $("d-size"),
-  dSizeNum: $("d-size-num"), dAliases: $("d-aliases"), dTabs: $("d-tabs"), dCode: $("d-code"), dMeta: $("d-meta"),
-  toast: $("toast"),
+  providers: $("providers"), grid: $("grid"), status: $("status"), sentinel: $("sentinel"), search: $("search"), sort: $("sort"), kbd: $("kbd"),
+  color: $("color"), colorText: $("color-text"), stroke: $("stroke"), strokeOut: $("stroke-out"), strokeCtl: $("stroke-ctl"),
+  size: $("size"), sizeOut: $("size-out"), nss: $("nss"), nssCtl: $("nss-ctl"), reset: $("reset"),
+  drawer: $("drawer"), dPreview: $("d-preview"), dName: $("d-name"), dMeta: $("d-meta"), dAliases: $("d-aliases"), dHint: $("d-hint"),
+  miFont: $("mi-font"), toast: $("toast"),
 };
 
 const state = {
   providers: [],
   provider: null,
-  data: null, // { info, names, aliasesOf, set }
+  data: null, // { info, names, aliasesOf, set, hasStroke }
   results: [],
   shown: 0,
   query: "",
-  color: null, // null = follow the page text color
-  stroke: null, // null = icon default
-  size: 32,
+  sort: "az",
   selected: null,
-  tab: "image",
+  ...DEFAULTS,
 };
 
 const cache = new Map();
 
 //--// Helpers \\--//
 function escapeHtml(text) {
-  return text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  return String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 }
 
 let toastTimer;
@@ -71,6 +70,14 @@ function hexToRgb(hex) {
   return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
 }
 
+function normalizeHex(text) {
+  const match = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(text.trim());
+  if (!match) return null;
+  let hex = match[1].toLowerCase();
+  if (hex.length === 3) hex = [...hex].map((c) => c + c).join("");
+  return `#${hex}`;
+}
+
 //--// Iconify icons (port of build.luau ResolveIcon/BuildSvg) \\--//
 function resolveIcon(set, name, seen = new Set()) {
   const icon = set.icons[name];
@@ -102,7 +109,7 @@ function resolveIcon(set, name, seen = new Set()) {
   };
 }
 
-// Returns the inner svg markup (body with flips and rotation applied) plus a square viewBox
+// Inner svg markup (flips and rotation applied) plus a square viewBox
 function iconParts(name) {
   const icon = resolveIcon(state.data.set, name);
   if (!icon) return null;
@@ -122,7 +129,7 @@ function iconParts(name) {
   return { body, viewBox: `${(icon.width - side) / 2} ${(icon.height - side) / 2} ${side} ${side}` };
 }
 
-function standaloneSvg(name, { size, color, stroke }) {
+function standaloneSvg(name, { size, color, stroke, nss }) {
   const parts = iconParts(name);
   if (!parts) return "";
 
@@ -130,13 +137,17 @@ function standaloneSvg(name, { size, color, stroke }) {
   if (color) body = body.replace(/currentColor/gi, color);
   if (stroke != null) body = body.replace(/stroke-width="[^"]*"/g, `stroke-width="${stroke}"`);
 
+  if (nss) body = body.replace(/<(path|circle|rect|line|polyline|polygon|ellipse)\b/g, '<$1 vector-effect="non-scaling-stroke"');
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${parts.viewBox}" width="${size}" height="${size}">${body}</svg>`;
 }
 
-function gridSvg(name) {
+function inlineSvg(name) {
   const parts = iconParts(name);
   return parts ? `<svg viewBox="${parts.viewBox}" aria-hidden="true">${parts.body}</svg>` : "";
 }
+
+const currentOptions = () => ({ size: state.size, color: state.color, stroke: state.stroke, nss: state.nss });
 
 //--// Loading \\--//
 async function fetchJson(url) {
@@ -160,7 +171,7 @@ async function loadProvider(id) {
   // Only icons present in both the built registry and the downloaded set can be drawn
   const names = index.icons.filter((name) => set.icons[name] || set.aliases?.[name]);
 
-  // Does this set draw with strokes? Decides whether the stroke slider is useful
+  // Does this set draw with strokes? Decides whether the stroke controls are useful
   const sample = names.slice(0, 60).filter((name) => set.icons[name]?.body.includes("stroke-width")).length;
   const data = { info, names, aliasesOf, set, hasStroke: sample > 12 };
 
@@ -168,12 +179,33 @@ async function loadProvider(id) {
   return data;
 }
 
+//--// Customizer \\--//
+function applyCustomizer() {
+  const grid = el.grid;
+  grid.style.setProperty("--icon-color", state.color ?? "var(--text)");
+  grid.style.setProperty("--icon-size", `${state.size}px`);
+  grid.style.setProperty("--sw", state.stroke ?? 2);
+  grid.classList.toggle("sw-on", state.stroke != null);
+  grid.classList.toggle("nss", state.nss);
+
+  el.strokeOut.textContent = `${state.stroke ?? 2}px`;
+  el.sizeOut.textContent = `${state.size}px`;
+  el.stroke.value = state.stroke ?? 2;
+  el.size.value = state.size;
+  el.nss.checked = state.nss;
+  el.colorText.value = state.color ?? "";
+  if (state.color) el.color.value = state.color;
+
+  el.strokeCtl.hidden = el.nssCtl.hidden = !state.data?.hasStroke;
+  renderDrawer();
+}
+
 //--// Rendering \\--//
 function renderProviders() {
   el.providers.innerHTML = state.providers
     .map(
       (provider) =>
-        `<button class="pill" type="button" data-id="${provider.id}" aria-pressed="${provider.id === state.provider}">${escapeHtml(provider.label)} <small>${provider.count.toLocaleString()}</small></button>`
+        `<li><button type="button" data-id="${provider.id}" aria-current="${provider.id === state.provider}">${escapeHtml(provider.label)}<small>${provider.count.toLocaleString()}</small></button></li>`
     )
     .join("");
 }
@@ -186,17 +218,22 @@ function filterResults() {
   const query = state.query.trim().toLowerCase();
   const { names, aliasesOf } = state.data;
 
-  if (!query) return names;
-
-  const terms = query.split(/\s+/);
-  const exact = [];
-  const rest = [];
-  for (const name of names) {
-    const haystack = [name, ...(aliasesOf.get(name) ?? [])].join(" ");
-    if (!terms.every((term) => haystack.includes(term))) continue;
-    (name === query || name.startsWith(query) ? exact : rest).push(name);
+  let results = names;
+  if (query) {
+    const terms = query.split(/\s+/);
+    const exact = [];
+    const rest = [];
+    for (const name of names) {
+      const haystack = [name, ...(aliasesOf.get(name) ?? [])].join(" ");
+      if (!terms.every((term) => haystack.includes(term))) continue;
+      (name === query || name.startsWith(query) ? exact : rest).push(name);
+    }
+    results = exact.concat(rest);
   }
-  return exact.concat(rest);
+
+  if (state.sort === "za") return [...results].sort().reverse();
+  if (state.sort === "short") return [...results].sort((a, b) => a.length - b.length || a.localeCompare(b));
+  return query ? results : names;
 }
 
 function renderChunk() {
@@ -204,7 +241,7 @@ function renderChunk() {
   const html = slice
     .map(
       (name) =>
-        `<button class="cell" type="button" data-name="${name}" aria-pressed="${name === state.selected}" title="${name}">${gridSvg(name)}<span>${name}</span></button>`
+        `<button class="tile" type="button" role="option" data-name="${name}" aria-label="${name}" aria-selected="${name === state.selected}">${inlineSvg(name)}</button>`
     )
     .join("");
   el.grid.insertAdjacentHTML("beforeend", html);
@@ -220,80 +257,66 @@ function renderGrid() {
   const total = state.data.names.length;
   setStatus(
     state.results.length
-      ? `${state.results.length.toLocaleString()} of ${total.toLocaleString()} icons`
+      ? state.query
+        ? `${state.results.length.toLocaleString()} of ${total.toLocaleString()} icons`
+        : ""
       : `No icons match "${escapeHtml(state.query)}"`
   );
+  el.search.placeholder = `Search ${total.toLocaleString()} icons…`;
 }
 
-function applyGridStyle() {
-  el.grid.style.setProperty("--icon-color", state.color ?? "currentColor");
-  el.grid.style.setProperty("--sw", state.stroke ?? 2);
-  el.grid.classList.toggle("sw-on", state.stroke != null);
-  el.strokeOut.textContent = state.stroke ?? "default";
-}
-
-//--// Detail panel \\--//
-function luaFor(name) {
+//--// Lua snippets \\--//
+function luaFor(name, kind) {
   const { info } = state.data;
   const rgb = state.color ? hexToRgb(state.color) : [255, 255, 255];
   const header = `local Icons = loadstring(game:HttpGet("${LOADER_URL}"))()\nIcons.SetProvider("${info.id}")\n\nlocal icon = Icons.GetAsset("${name}")`;
 
-  if (state.tab === "font") {
-    return `${header}\n\nlocal label = Instance.new("TextLabel")\nlabel.BackgroundTransparency = 1\nlabel.Size = UDim2.fromOffset(${state.size}, ${state.size})\nlabel.TextSize = ${state.size}\nlabel.TextColor3 = Color3.fromRGB(${rgb.join(", ")})\nlabel.FontFace = icon.FontFace -- nil when the executor can't load fonts\nlabel.Text = icon.Text`;
+  if (kind === "font") {
+    return `${header}\n\nlocal label = Instance.new("TextLabel")\nlabel.BackgroundTransparency = 1\nlabel.Size = UDim2.fromOffset(${state.size}, ${state.size})\nlabel.TextSize = ${Math.min(100, state.size)}\nlabel.TextColor3 = Color3.fromRGB(${rgb.join(", ")})\nlabel.FontFace = icon.FontFace -- nil when the executor can't load fonts\nlabel.Text = icon.Text`;
   }
 
   return `${header}\n\nlocal image = Instance.new("ImageLabel")\nimage.BackgroundTransparency = 1\nimage.Size = UDim2.fromOffset(${state.size}, ${state.size})\nimage.ImageColor3 = Color3.fromRGB(${rgb.join(", ")})\nimage.Image = icon.Url\nimage.ImageRectSize = icon.ImageRectSize\nimage.ImageRectOffset = icon.ImageRectOffset`;
 }
 
-function codeFor(name) {
-  if (state.tab === "svg") return standaloneSvg(name, { size: state.size, color: state.color, stroke: state.stroke });
-  return luaFor(name);
-}
-
-function renderTabs() {
-  const tabs = [
-    ["image", "ImageLabel"],
-    ...(state.data.info.font ? [["font", "TextLabel (font)"]] : []),
-    ["svg", "SVG"],
-  ];
-  if (!tabs.some(([id]) => id === state.tab)) state.tab = "image";
-
-  el.dTabs.innerHTML = tabs
-    .map(([id, label]) => `<button class="tab" type="button" role="tab" data-tab="${id}" aria-selected="${id === state.tab}">${label}</button>`)
-    .join("");
-}
-
-function renderDetail() {
+//--// Drawer \\--//
+function renderDrawer() {
   const name = state.selected;
   if (!name || !state.data) {
-    el.detail.hidden = true;
+    el.drawer.hidden = true;
     return;
   }
 
-  el.detail.hidden = false;
+  const { info, aliasesOf } = state.data;
+  el.drawer.hidden = false;
   el.dName.textContent = name;
+  el.dMeta.textContent = `${info.label} · ${info.license}`;
+
   el.dPreview.style.color = state.color ?? "var(--text)";
-  el.dPreview.innerHTML = standaloneSvg(name, { size: state.size, color: null, stroke: state.stroke });
-  el.dHint.hidden = state.size <= SPRITE_SIZE;
+  el.dPreview.style.setProperty("--sw", state.stroke ?? 2);
+  el.dPreview.classList.toggle("sw-on", state.stroke != null);
+  el.dPreview.classList.toggle("nss", state.nss);
+  el.dPreview.innerHTML = inlineSvg(name);
 
-  const aliases = state.data.aliasesOf.get(name) ?? [];
-  el.dAliases.hidden = !aliases.length;
-  el.dAliases.innerHTML = aliases.map((alias) => `<span>${escapeHtml(alias)}</span>`).join("");
+  const aliases = aliasesOf.get(name) ?? [];
+  const shown = aliases.slice(0, 5);
+  el.dAliases.innerHTML =
+    shown.map((alias) => `<span>${escapeHtml(alias)}</span>`).join("") +
+    (aliases.length > shown.length ? `<b>+${aliases.length - shown.length}</b>` : "");
 
-  const { info } = state.data;
-  el.dMeta.textContent = `${info.label} · ${info.license} license`;
-
-  renderTabs();
-  el.dCode.textContent = codeFor(name);
+  el.miFont.disabled = !info.font;
+  el.dHint.hidden = info.font || state.size <= SPRITE_SIZE;
 }
 
-function select(name) {
-  const previous = el.grid.querySelector('.cell[aria-pressed="true"]');
-  previous?.setAttribute("aria-pressed", "false");
+function select(name, { scroll = false } = {}) {
+  el.grid.querySelector('.tile[aria-selected="true"]')?.setAttribute("aria-selected", "false");
 
   state.selected = name;
-  el.grid.querySelector(`.cell[data-name="${CSS.escape(name ?? "")}"]`)?.setAttribute("aria-pressed", "true");
-  renderDetail();
+  const tile = name ? el.grid.querySelector(`.tile[data-name="${CSS.escape(name)}"]`) : null;
+  tile?.setAttribute("aria-selected", "true");
+  if (tile && scroll) tile.scrollIntoView({ block: "center" });
+
+  closeMenus();
+  renderDrawer();
   syncHash();
 }
 
@@ -316,7 +339,7 @@ async function showProvider(id, { name = null, query = "" } = {}) {
   state.query = query;
   el.search.value = query;
   renderProviders();
-  renderDetail();
+  renderDrawer();
   el.grid.innerHTML = "";
   setStatus("Loading icons…");
 
@@ -325,10 +348,9 @@ async function showProvider(id, { name = null, query = "" } = {}) {
     if (state.provider !== id) return; // user switched again while loading
 
     state.data = data;
-    el.strokeTool.hidden = !data.hasStroke;
     renderGrid();
-    applyGridStyle();
-    if (name && data.names.includes(name)) select(name);
+    applyCustomizer();
+    if (name && data.names.includes(name)) select(name, { scroll: true });
     else syncHash();
   } catch (error) {
     if (state.provider !== id) return;
@@ -338,22 +360,109 @@ async function showProvider(id, { name = null, query = "" } = {}) {
   }
 }
 
+//--// Menus \\--//
+function closeMenus() {
+  for (const menu of document.querySelectorAll(".menu")) menu.hidden = true;
+  for (const button of document.querySelectorAll("[data-menu]")) button.setAttribute("aria-expanded", "false");
+}
+
+document.addEventListener("click", (event) => {
+  const toggle = event.target.closest("[data-menu]");
+  if (toggle) {
+    const menu = $(toggle.dataset.menu);
+    const open = menu.hidden;
+    closeMenus();
+    menu.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) menu.querySelector("button:not([disabled])")?.focus();
+    return;
+  }
+
+  const item = event.target.closest(".menu [data-act]");
+  if (item) {
+    runAction(item.dataset.act);
+    closeMenus();
+    return;
+  }
+
+  if (!event.target.closest(".menu")) closeMenus();
+});
+
+function runAction(action) {
+  const name = state.selected;
+  if (!name) return;
+  const options = currentOptions();
+
+  switch (action) {
+    case "lua":
+      // Fonts are crisp at any size, so they are the default whenever the provider has one
+      return runAction(state.data.info.font ? "lua-font" : "lua-image");
+    case "lua-image":
+      return copy(luaFor(name, "image"), "Lua copied");
+    case "lua-font":
+      return copy(luaFor(name, "font"), "Font Lua copied");
+    case "name":
+      return copy(name, "Name copied");
+    case "svg":
+      return copy(standaloneSvg(name, options), "SVG copied");
+    case "data-url":
+      return copy(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(standaloneSvg(name, options))}`, "Data URL copied");
+    case "dl-svg":
+      return download(`${name}.svg`, new Blob([standaloneSvg(name, options)], { type: "image/svg+xml" }));
+    case "dl-png": {
+      // PNGs need a concrete color, and the "default" one is the page text color, so use white like Roblox does
+      const size = Math.max(options.size, 128);
+      const svg = standaloneSvg(name, { ...options, size, color: options.color ?? "#ffffff" });
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = size;
+        canvas.getContext("2d").drawImage(image, 0, 0, size, size);
+        canvas.toBlob((blob) => download(`${name}.png`, blob));
+      };
+      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      return;
+    }
+  }
+}
+
+$("b-lua").addEventListener("click", () => runAction("lua"));
+$("b-svg").addEventListener("click", () => runAction("svg"));
+$("d-close").addEventListener("click", () => select(null));
+
 //--// Events \\--//
 el.providers.addEventListener("click", (event) => {
-  const pill = event.target.closest(".pill");
-  if (pill && pill.dataset.id !== state.provider) showProvider(pill.dataset.id);
+  const button = event.target.closest("button[data-id]");
+  if (button && button.dataset.id !== state.provider) showProvider(button.dataset.id);
 });
 
 el.grid.addEventListener("click", (event) => {
-  const cell = event.target.closest(".cell");
-  if (cell) select(cell.dataset.name);
+  const tile = event.target.closest(".tile");
+  if (tile) select(tile.dataset.name === state.selected ? null : tile.dataset.name);
+});
+
+// Arrow keys move between tiles like a grid
+el.grid.addEventListener("keydown", (event) => {
+  const tile = event.target.closest(".tile");
+  if (!tile || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+
+  const tiles = [...el.grid.children];
+  const index = tiles.indexOf(tile);
+  const columns = getComputedStyle(el.grid).gridTemplateColumns.split(" ").length;
+  const delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columns, ArrowDown: columns }[event.key];
+  const next = tiles[index + delta];
+  if (!next) return;
+
+  event.preventDefault();
+  next.focus();
+  if (index + delta >= tiles.length - columns && state.shown < state.results.length) renderChunk();
 });
 
 new IntersectionObserver(
   (entries) => {
     if (entries[0].isIntersecting && state.data && state.shown < state.results.length) renderChunk();
   },
-  { rootMargin: "800px" }
+  { rootMargin: "1200px" }
 ).observe(el.sentinel);
 
 let searchTimer;
@@ -367,85 +476,68 @@ el.search.addEventListener("input", () => {
   }, 90);
 });
 
-el.color.addEventListener("input", () => {
-  state.color = el.color.value;
-  applyGridStyle();
-  renderDetail();
+el.sort.addEventListener("change", () => {
+  state.sort = el.sort.value;
+  if (state.data) renderGrid();
 });
 
-el.colorReset.addEventListener("click", () => {
-  state.color = null;
-  applyGridStyle();
-  renderDetail();
+el.color.addEventListener("input", () => {
+  state.color = el.color.value;
+  applyCustomizer();
 });
+el.colorText.addEventListener("input", () => {
+  const text = el.colorText.value.trim();
+  if (!text) {
+    state.color = null;
+    el.grid.style.setProperty("--icon-color", "var(--text)");
+    renderDrawer();
+    return;
+  }
+  const hex = normalizeHex(text);
+  if (!hex) return;
+  state.color = hex;
+  el.color.value = hex;
+  el.grid.style.setProperty("--icon-color", hex);
+  renderDrawer();
+});
+el.colorText.addEventListener("change", applyCustomizer);
 
 el.stroke.addEventListener("input", () => {
   state.stroke = Number(el.stroke.value);
-  applyGridStyle();
-  renderDetail();
+  applyCustomizer();
 });
-
-function setSize(value) {
-  state.size = Math.min(512, Math.max(12, Math.round(Number(value) || 32)));
-  el.dSize.value = Math.min(128, state.size);
-  el.dSizeNum.value = state.size;
-  renderDetail();
-}
-el.dSize.addEventListener("input", () => setSize(el.dSize.value));
-el.dSizeNum.addEventListener("change", () => setSize(el.dSizeNum.value));
-
-$("d-close").addEventListener("click", () => select(null));
-
-el.dTabs.addEventListener("click", (event) => {
-  const tab = event.target.closest(".tab");
-  if (!tab) return;
-  state.tab = tab.dataset.tab;
-  renderDetail();
+el.size.addEventListener("input", () => {
+  state.size = Number(el.size.value);
+  applyCustomizer();
 });
-
-function currentSvg() {
-  // Downloads need a concrete color, and viewers default to black, so "auto" stays currentColor
-  return standaloneSvg(state.selected, { size: state.size, color: state.color, stroke: state.stroke });
-}
-
-$("a-lua").addEventListener("click", () => {
-  const tab = state.tab;
-  state.tab = tab === "svg" ? "image" : tab;
-  copy(luaFor(state.selected), "Lua copied");
-  state.tab = tab;
+el.nss.addEventListener("change", () => {
+  state.nss = el.nss.checked;
+  applyCustomizer();
 });
-$("a-name").addEventListener("click", () => copy(state.selected, "Name copied"));
-$("a-svg").addEventListener("click", () => copy(currentSvg(), "SVG copied"));
-$("a-dl-svg").addEventListener("click", () => {
-  download(`${state.selected}.svg`, new Blob([currentSvg()], { type: "image/svg+xml" }));
-});
-$("a-dl-png").addEventListener("click", () => {
-  const svg = standaloneSvg(state.selected, { size: state.size, color: state.color ?? "#000000", stroke: state.stroke });
-  const image = new Image();
-  image.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = state.size;
-    canvas.getContext("2d").drawImage(image, 0, 0, state.size, state.size);
-    canvas.toBlob((blob) => download(`${state.selected}.png`, blob));
-  };
-  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+el.reset.addEventListener("click", () => {
+  Object.assign(state, DEFAULTS);
+  applyCustomizer();
+  toast("Customizer reset");
 });
 
 document.addEventListener("keydown", (event) => {
-  const typing = event.target.matches("input, textarea");
-  if (event.key === "/" && !typing) {
+  const typing = event.target.matches("input, textarea, select");
+  const mod = event.metaKey || event.ctrlKey;
+
+  if ((event.key === "/" && !typing) || (mod && event.key.toLowerCase() === "k")) {
     event.preventDefault();
     el.search.focus();
     el.search.select();
   } else if (event.key === "Escape") {
-    if (typing && el.search.value && event.target === el.search) {
+    if (document.querySelector(".menu:not([hidden])")) closeMenus();
+    else if (event.target === el.search && el.search.value) {
       el.search.value = "";
       el.search.dispatchEvent(new Event("input"));
-    } else if (state.selected) {
-      select(null);
-    }
+    } else if (state.selected) select(null);
   }
 });
+
+el.kbd.textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K";
 
 window.addEventListener("hashchange", () => {
   const { provider, name, query } = parseHash();
@@ -456,7 +548,7 @@ window.addEventListener("hashchange", () => {
       el.search.value = query;
       renderGrid();
     }
-    if (name !== state.selected) select(name ?? null);
+    if ((name ?? null) !== state.selected) select(name ?? null);
   } else {
     showProvider(provider, { name, query });
   }
@@ -470,7 +562,7 @@ window.addEventListener("hashchange", () => {
 
     const route = parseHash();
     const initial = state.providers.some((p) => p.id === route.provider) ? route.provider : registry.default;
-    el.dSizeNum.value = state.size;
+    applyCustomizer();
     await showProvider(initial, route.provider === initial ? route : {});
   } catch (error) {
     console.error(error);
