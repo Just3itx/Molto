@@ -9,7 +9,7 @@ const DEFAULTS = { color: null, stroke: null, size: 24, nss: false };
 const $ = (id) => document.getElementById(id);
 const el = {
   providers: $("providers"), grid: $("grid"), status: $("status"), sentinel: $("sentinel"), search: $("search"), sort: $("sort"), kbd: $("kbd"),
-  color: $("color"), colorText: $("color-text"), stroke: $("stroke"), strokeOut: $("stroke-out"), strokeCtl: $("stroke-ctl"),
+  color: $("color"), colorText: $("color-text"),
   size: $("size"), sizeOut: $("size-out"), nss: $("nss"), nssCtl: $("nss-ctl"), reset: $("reset"),
   drawer: $("drawer"), dPreview: $("d-preview"), dName: $("d-name"), dMeta: $("d-meta"), dAliases: $("d-aliases"), dHint: $("d-hint"),
   miFont: $("mi-font"), toast: $("toast"),
@@ -184,19 +184,15 @@ function applyCustomizer() {
   const grid = el.grid;
   grid.style.setProperty("--icon-color", state.color ?? "var(--text)");
   grid.style.setProperty("--icon-size", `${state.size}px`);
-  grid.style.setProperty("--sw", state.stroke ?? 2);
-  grid.classList.toggle("sw-on", state.stroke != null);
   grid.classList.toggle("nss", state.nss);
 
-  el.strokeOut.textContent = `${state.stroke ?? 2}px`;
   el.sizeOut.textContent = `${state.size}px`;
-  el.stroke.value = state.stroke ?? 2;
   el.size.value = state.size;
   el.nss.checked = state.nss;
   el.colorText.value = state.color ?? "";
   if (state.color) el.color.value = state.color;
 
-  el.strokeCtl.hidden = el.nssCtl.hidden = !state.data?.hasStroke;
+  el.nssCtl.hidden = !state.data?.hasStroke;
   renderDrawer();
 }
 
@@ -346,8 +342,6 @@ function renderDrawer() {
   el.dMeta.textContent = `${info.label} · ${info.license}`;
 
   el.dPreview.style.color = state.color ?? "var(--text)";
-  el.dPreview.style.setProperty("--sw", state.stroke ?? 2);
-  el.dPreview.classList.toggle("sw-on", state.stroke != null);
   el.dPreview.classList.toggle("nss", state.nss);
   el.dPreview.innerHTML = inlineSvg(name);
 
@@ -557,10 +551,6 @@ el.colorText.addEventListener("input", () => {
 });
 el.colorText.addEventListener("change", applyCustomizer);
 
-el.stroke.addEventListener("input", () => {
-  state.stroke = Number(el.stroke.value);
-  applyCustomizer();
-});
 el.size.addEventListener("input", () => {
   state.size = Number(el.size.value);
   applyCustomizer();
