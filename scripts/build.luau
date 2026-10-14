@@ -41,11 +41,11 @@ local ROBLOX_CREATOR_ID = process.env["ROBLOX_CREATOR_ID"]
 local ICON_SIZE = 24
 local WORKERS = 8
 local FONT_WORKERS = 3
--- A TrueType ligature table overflows at a few thousand icons, so big sets are split into several fonts.
--- This is the target number of icons per font, the real count varies a little because icons are spread by name hash
-local FONT_PART_SIZE = 1500
+-- A TrueType ligature table overflows at 64KB, and every icon name costs bytes in it (6 + 2 per character).
+-- Fonts above this budget are split into parts. 55KB is known to fit, 84KB is known to overflow
+local FONT_PART_BUDGET = 45000
 -- Bump when the build pipeline changes in a way that alters the generated assets
-local PIPELINE_VERSION = 1
+local PIPELINE_VERSION = 2
 local ICON_SETS_DIR = "build/icon-sets"
 local MANIFEST_PATH = "providers/manifest.json"
 
@@ -355,6 +355,7 @@ local function ProcessPngs(pngDir: string)
 	local pngFiles = ListFiles(pngDir, "png")
 	print(`Processing {#pngFiles} PNG files with ImageMagick...`)
 
+	local Failures = 0
 	RunPool(Chunk(pngFiles), function(chunk: { string })
 		local quoted = {}
 		for _, file in chunk do
@@ -362,7 +363,7 @@ local function ProcessPngs(pngDir: string)
 		end
 
 		local result = RunCommand(
-			`magick mogrify -channel RGB -negate +channel -alpha on -type TrueColorAlpha -colorspace sRGB -define png:color-type=6 {table.concat(quoted, " ")}`,
+			`mogrify -channel RGB -negate +channel -alpha on -type TrueColorAlpha -colorspace sRGB -define png:color-type=6 {table.concat(quoted, " ")}`,
 			nil,
 			false
 		)
@@ -370,8 +371,13 @@ local function ProcessPngs(pngDir: string)
 		if result.ok then
 			return `Processed {#chunk} icons from {chunk[1]:match("[^/]+$")}`
 		end
+
+		Failures += 1
 		return `Failed to process chunk from {chunk[1]:match("[^/]+$")}: Exit code {result.code}`
 	end)
+
+	-- Unprocessed icons would stay black, which is invisible once tinted
+	assert(Failures == 0, `ImageMagick failed on {Failures} chunks, check that mogrify runs`)
 end
 
 --// Incremental builds \\--
@@ -388,7 +394,7 @@ local function ComputeSourceHash(provider: ProviderConfig): string
 			serde.hash("sha256", fs.readFile(setPath)),
 			tostring(PIPELINE_VERSION),
 			tostring(ICON_SIZE),
-			tostring(FONT_PART_SIZE),
+			tostring(FONT_PART_BUDGET),
 			tostring(provider.font ~= false),
 			provider.name or "",
 		}, "\n")
@@ -559,7 +565,12 @@ end]]
 	local FontSources = {}
 	local FontParts = 0
 	if provider.font ~= false then
-		local PartCount = math.ceil(#Icons / FONT_PART_SIZE)
+		local TotalCost = 0
+		for _, name in Icons do
+			TotalCost += 6 + 2 * #name
+		end
+
+		local PartCount = math.max(1, math.ceil(TotalCost / FONT_PART_BUDGET))
 		local PartNames = {}
 		for part = 1, PartCount do
 			PartNames[part] = {}
