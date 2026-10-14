@@ -45,7 +45,7 @@ local FONT_WORKERS = 3
 -- Fonts above this budget are split into parts. 55KB is known to fit, 84KB is known to overflow
 local FONT_PART_BUDGET = 45000
 -- Bump when the build pipeline changes in a way that alters the generated assets
-local PIPELINE_VERSION = 2
+local PIPELINE_VERSION = 3
 local ICON_SETS_DIR = "build/icon-sets"
 local MANIFEST_PATH = "providers/manifest.json"
 

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { copyFile, mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import SVGFixer from "oslllo-svg-fixer";
 import svgtofont from "svgtofont";
@@ -31,6 +31,14 @@ if (nextCodepoint > 0xF900) throw new Error("Too many icons for the private-use 
 await rm(outlinedDir, { recursive: true, force: true });
 await mkdir(outlinedDir, { recursive: true });
 await SVGFixer(iconsDir, outlinedDir, { traceResolution: 800 }).fix();
+
+// svgtofont scales every glyph by the largest svg in the font, so a set with several sizes (16px next to 48px)
+// would draw its small icons tiny. Give every outlined svg the same size so each icon fills the em square
+for (const file of await readdir(outlinedDir)) {
+  const filePath = path.join(outlinedDir, file);
+  const svg = await readFile(filePath, "utf8");
+  await writeFile(filePath, svg.replace(/<svg\b[^>]*>/, (tag) => tag.replace(/\s(width|height)="[^"]*"/g, "").replace("<svg", '<svg width="1000" height="1000"')));
+}
 await svgtofont({
   src: outlinedDir,
   dist: fontDir,
