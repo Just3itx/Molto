@@ -1,6 +1,6 @@
 {
-  "version": "9aebe527ef232d54d8dd01dae698841ff624027eec6b3dff486877301f3b9c5e",
-  "nextCodepoint": 58509,
+  "version": "4e739a0f13af5a5f32b0bcc74dd39abbb5e575be34c76e384ce58584fe7fb516",
+  "nextCodepoint": 58512,
   "icons": {
     "a-arrow-up": 57793,
     "a-large-small": 57794,
@@ -275,6 +275,7 @@
     "corner-down-left": 58063,
     "corner-right-up": 58064,
     "cpu": 58065,
+    "cpu-ai": 58509,
     "creative-commons": 58066,
     "credit-card": 58067,
     "credit-card-minus": 58068,
@@ -706,6 +707,7 @@
     "section": 58494,
     "separator-vertical": 58495,
     "server": 58496,
+    "server-nas": 58510,
     "server-plus": 58497,
     "settings": 58498,
     "shapes": 58499,
@@ -906,6 +908,7 @@
     "user-round-check": 57684,
     "user-search": 57694,
     "user-star": 57696,
+    "users-collaboration": 58511,
     "users-round": 57699,
     "utensils-crossed": 57701,
     "vault": 57705,

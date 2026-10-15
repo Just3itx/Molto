@@ -51,18 +51,18 @@
     "SourceHash": "6439652a852d969b2916cffd09efb0ab9a6f2127b7b7692b7b0e48315b4b8029"
   },
   "lucide": {
-    "Count": 1949,
+    "Count": 1962,
     "Font": true,
     "FontParts": 2,
     "FontSources": [
-      "d66b6476722a769d62bed442ba58d2a4fbf9e2cf2177947ffbc2427a7a919255",
-      "eed964af3bca480e8122ec3a6989f42668a302cde19a818e5bd7c1c2a3a74c62"
+      "4ebe99c5ae25efcc41662dc5ab6eaba4e593bb8a5553b88beb21214834291fdd",
+      "cf5cfeeb5d34dc869e14028d7b3b29890a3210a2e180c3b68bc35f1c68ab2447"
     ],
-    "Hash": "f5383b9114e20e2de4dce3929ca45c2cab1d77efa599fe326867fce4bcd2170c",
+    "Hash": "d696c1613123ecf29dd415cafa9c1c4cfe753307ed88439c7c02e2bf765c75d4",
     "License": "ISC",
     "Name": "Lucide",
     "Sheets": 2,
-    "SourceHash": "d429f2be5ff1bd8f37df9e97211f4e6024021f1773f2b197b7ca24aa7cdf33b9"
+    "SourceHash": "423a40bf7c8261df0f4488795f29363459e0d983f7a472a56361a0ca732cb06b"
   },
   "phosphor": {
     "Count": 9161,
@@ -83,6 +83,28 @@
     "Name": "Phosphor",
     "Sheets": 6,
     "SourceHash": "c3b2cb558245a0660ceecb7597fd5f38eb4d3e39ab37a8da64196384821bb76d"
+  },
+  "solar": {
+    "Count": 8859,
+    "Font": true,
+    "FontParts": 10,
+    "FontSources": [
+      "3802b325e0eef37da22ec8f19edb8242fb0abe4866aaa723bf45600ea750f09c",
+      "72b0c1f3edde0bd89b7324266a5e64150bd8c66de1dcc8b21e606cba281a578a",
+      "4b7be61461c75eb5b721cc70076b62bf037447c0fc33f8da80df0ff7f1ef18cc",
+      "7d9c618b25ae8bc59cdda100dde6aaf178f63b0ebc023a69100993b81f0df365",
+      "9fe2dfd85a94e9c2f7a0114f0431e23433a093e9b09dc707fa351496f5183131",
+      "bf0b1109835e55a511c36b383faef3f055ed1bb0bb4c3bd60dfdceb970d890b1",
+      "565beac7a0aa5279b0c35d1f49b105c91cb8a0f7fe8a72be4f38ed06870291f0",
+      "37b9ef51ceb693ebbf7e2b100f0a95a1d9749425d316f1408e2fea252c167930",
+      "d2ccef64bc1a2185194c5865a0b337b8de85d43561202148179272a6c2a1d2b0",
+      "d6376e04d3f8747fa4fd388744560670fa5006dc0978c3fc99ec130c783dee72"
+    ],
+    "Hash": "1dd38a1afdeef9ae2bda29590ffb87909ff144cc4d51f618c6e1b72a97a716f7",
+    "License": "CC BY 4.0",
+    "Name": "Solar",
+    "Sheets": 6,
+    "SourceHash": "7edd6e3c80b0440e7d21eb23fca74b84e645e90d99dcbd493ecc170b7d317753"
   },
   "tabler": {
     "Count": 6286,
