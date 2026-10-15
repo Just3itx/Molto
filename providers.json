@@ -5,6 +5,7 @@
 		{ "id": "tabler", "prefix": "tabler", "name": "Tabler" },
 		{ "id": "heroicons", "prefix": "heroicons", "name": "Heroicons" },
 		{ "id": "phosphor", "prefix": "ph", "name": "Phosphor" },
-		{ "id": "fluent", "prefix": "fluent", "name": "Fluent UI" }
+		{ "id": "fluent", "prefix": "fluent", "name": "Fluent UI" },
+		{ "id": "solar", "prefix": "solar", "name": "Solar" }
 	]
 }
