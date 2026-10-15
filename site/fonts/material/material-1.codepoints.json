@@ -1,6 +1,6 @@
 {
-  "version": "e972d164d1d96ace69214facb642eab46d199207421a0321395a7f852187809c",
-  "nextCodepoint": 58275,
+  "version": "3481093769ce6ccd0c06af89de843b18effba7878d023061d2b26754a7446cc4",
+  "nextCodepoint": 58298,
   "icons": {
     "action-key-rounded": 57344,
     "acute-outline-rounded": 57345,
@@ -932,6 +932,29 @@
     "wrist-rounded": 58271,
     "wrong-location-outline": 58272,
     "wrong-location-rounded": 58273,
+    "x-13mp-sharp": 58275,
+    "x-14mp-outline-sharp": 58276,
+    "x-15mp-rounded": 58277,
+    "x-18-up-rating-outline": 58278,
+    "x-19mp": 58279,
+    "x-1k-outline-sharp": 58280,
+    "x-22mp-outline-rounded": 58281,
+    "x-24fps-select": 58282,
+    "x-24mp-outline": 58283,
+    "x-2k-sharp": 58284,
+    "x-30fps-sharp": 58285,
+    "x-3d-rotation-sharp": 58286,
+    "x-3d-rounded": 58287,
+    "x-3k-sharp": 58288,
+    "x-4k-plus-outline-rounded": 58289,
+    "x-5k": 58290,
+    "x-5k-plus": 58291,
+    "x-5mp": 58292,
+    "x-5mp-outline-rounded": 58293,
+    "x-60fps-select-rounded": 58294,
+    "x-6mp-outline": 58295,
+    "x-7k-plus-outline": 58296,
+    "x-7k-rounded": 58297,
     "zoom-out-map-rounded": 58274
   }
 }

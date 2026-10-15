@@ -1,6 +1,6 @@
 {
-  "version": "97d4f2a5b90c96af4007b09217bf4c9bce6e8e8189f8695564bd4db58ed85f4b",
-  "nextCodepoint": 59039,
+  "version": "4026bbd57b456f2757cba8c77fbec428b109dcb10a8761369619dcd5fb3112ed",
+  "nextCodepoint": 59040,
   "icons": {
     "accessibility-bold": 57344,
     "accessibility-linear": 57345,
@@ -984,6 +984,7 @@
     "wind-outline": 58244,
     "winrar-linear": 59036,
     "women-broken": 59037,
+    "x-4k-broken": 59039,
     "xxx-broken": 59038
   }
 }

@@ -1,6 +1,6 @@
 {
-  "version": "09a65fa14abdce8f85f66969cb7f161e28c1c229adc3159150133b636c4c9aef",
-  "nextCodepoint": 58291,
+  "version": "05fb10612e19dbc3795d6b150e3fd752b5b2ed4ec7e6e8397260e805fff9360f",
+  "nextCodepoint": 58308,
   "icons": {
     "accessibility-rounded": 57344,
     "accessible-menu": 57345,
@@ -947,6 +947,23 @@
     "wind-power-sharp": 58286,
     "windshield-defrost-rear-rounded": 58287,
     "wounds-injuries": 58288,
+    "x-10k-outline-sharp": 58291,
+    "x-16mp-sharp": 58292,
+    "x-17mp-rounded": 58293,
+    "x-18mp-outline-rounded": 58294,
+    "x-1k-outline": 58295,
+    "x-1k-plus": 58296,
+    "x-2d": 58297,
+    "x-30fps-select-sharp": 58298,
+    "x-360": 58299,
+    "x-4g-mobiledata-badge-rounded": 58300,
+    "x-5k-outline-rounded": 58301,
+    "x-6mp": 58302,
+    "x-7k-plus-sharp": 58303,
+    "x-7mp-outline-sharp": 58304,
+    "x-8mp-outline": 58305,
+    "x-8mp-rounded": 58306,
+    "x-9k-outline-rounded": 58307,
     "yakitori": 58289,
     "zone-person-idle-sharp": 58290
   }

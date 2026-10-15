@@ -1,6 +1,6 @@
 {
-  "version": "22e4367d1aa562b38ad319a651a77724d28b0df246e989044ab588e7ed78439d",
-  "nextCodepoint": 58318,
+  "version": "0b816bfc1ce02d317b52d38483efbc2f99dfc5b7a09317aaa1583c2bf1f53c32",
+  "nextCodepoint": 58332,
   "icons": {
     "abc-sharp": 57344,
     "account-box-outline": 57345,
@@ -974,6 +974,20 @@
     "wrap-text": 58313,
     "wrist": 58314,
     "wrong-location": 58315,
+    "x-10k-sharp": 58318,
+    "x-19mp-rounded": 58319,
+    "x-1k-plus-outline-rounded": 58320,
+    "x-2k-outline-sharp": 58321,
+    "x-2k-plus-rounded": 58322,
+    "x-360-rounded": 58323,
+    "x-3g-mobiledata-badge-outline-sharp": 58324,
+    "x-3mp-outline-rounded": 58325,
+    "x-3mp-sharp": 58326,
+    "x-3p-sharp": 58327,
+    "x-4g-plus-mobiledata-sharp": 58328,
+    "x-6-ft-apart": 58329,
+    "x-7mp": 58330,
+    "x-8k-sharp": 58331,
     "x-circle-outline-rounded": 58316,
     "zone-person-urgent-rounded": 58317
   }

@@ -1,6 +1,6 @@
 {
-  "version": "36bc3e56f27fd8f1f36fd92f6e1a11d0a1a09f3ffa185fdbfda1eee76624c221",
-  "nextCodepoint": 59054,
+  "version": "b02ce0c1302d052305e4252b74a83c9cfa3db0e7c0522f2fa8ab85df0e1f80f8",
+  "nextCodepoint": 59055,
   "icons": {
     "add-bold": 57345,
     "add-linear": 57348,
@@ -1016,6 +1016,7 @@
     "wineglass-triangle-outline": 58228,
     "winrar-broken": 59052,
     "wireless-charge-broken": 58229,
-    "women-linear": 59053
+    "women-linear": 59053,
+    "x-4k-linear": 59054
   }
 }
