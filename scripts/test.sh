@@ -6,6 +6,8 @@ for file in site/fonts/*/*.codepoints.json; do
 	[ -e "$file" ] || continue
 	dir=$(dirname "$file")
 	id=$(basename "$dir")
+	# Incremental builds only regenerate the SVGs of providers that changed, and the others were verified when they were built
+	[ -d "build/svg/$id" ] || continue
 	name=$(basename "$file" .codepoints.json)
 	node scripts/test-font.mjs "$dir" "build/svg/$id" "$name"
 done
