@@ -1,7 +1,7 @@
 "use strict";
 
 const LOADER_URL = "https://molto.pages.dev/source.lua";
-const SET_URL = (prefix) => `https://cdn.jsdelivr.net/gh/iconify/icon-sets@master/json/${prefix}.json`;
+const SET_URL = (id) => `../data/${id}.set.json`;
 const CHUNK = 500;
 const SPRITE_SIZE = 24;
 const DEFAULTS = { color: null, stroke: null, size: 24, nss: false };
@@ -160,7 +160,7 @@ async function loadProvider(id) {
   if (cache.has(id)) return cache.get(id);
 
   const info = state.providers.find((provider) => provider.id === id);
-  const [index, set] = await Promise.all([fetchJson(`../data/${id}.json`), fetchJson(SET_URL(info.prefix))]);
+  const [index, set] = await Promise.all([fetchJson(`../data/${id}.json`), fetchJson(SET_URL(info.id))]);
 
   const aliasesOf = new Map();
   for (const [alias, target] of Object.entries(index.aliases ?? {})) {

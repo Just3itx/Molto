@@ -558,6 +558,13 @@ end]]
 	-- Index for the icon browser in site/
 	fs.writeFile(`site/data/{provider.id}.json`, serde.encode("json", { icons = Icons, aliases = Aliases }))
 
+	-- The browser draws icons from this slimmed copy of the Iconify set, so it needs no third-party CDN
+	local SourceSet = serde.decode("json", fs.readFile(`{ICON_SETS_DIR}/json/{provider.prefix}.json`))
+	fs.writeFile(
+		`site/data/{provider.id}.set.json`,
+		serde.encode("json", { width = SourceSet.width, height = SourceSet.height, icons = SourceSet.icons, aliases = SourceSet.aliases })
+	)
+
 	-- Icon font: names shape into one glyph through an OpenType ligature. Big sets are split into parts
 	local FontDir = `site/fonts/{provider.id}`
 	local Previous = Manifest[provider.id]
