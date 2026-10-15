@@ -423,8 +423,14 @@ local function IsUpToDate(provider: ProviderConfig, hash: string): boolean
 end
 
 --// Fonts \\--
--- A font has one color, so icons drawn with see-through layers (duotone) turn into solid blobs. They stay sprite-only
-local function IsFaded(svg: string): boolean
+-- Icons a font cannot draw faithfully stay sprite-only:
+-- see-through layers (duotone) turn into solid blobs because a font has one color,
+-- masks and clips come out partial, and names starting with a digit do not shape in Roblox's text engine
+local function IsSpriteOnly(name: string, svg: string): boolean
+	if name:match("^%d") or svg:find("<mask", 1, true) or svg:find("clip-path", 1, true) or svg:find("<clipPath", 1, true) then
+		return true
+	end
+
 	for value in svg:gmatch('opacity="([%d%.]+)"') do
 		local opacity = tonumber(value)
 		if opacity and opacity < 1 then
@@ -568,7 +574,7 @@ end]]
 	local NoFont = {}
 	local FontIcons = {}
 	for _, name in Icons do
-		if IsFaded(fs.readFile(`{svgDir}/{name}.svg`)) then
+		if IsSpriteOnly(name, fs.readFile(`{svgDir}/{name}.svg`)) then
 			table.insert(NoFont, name)
 		else
 			table.insert(FontIcons, name)

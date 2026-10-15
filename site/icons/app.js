@@ -79,10 +79,11 @@ function normalizeHex(text) {
 }
 
 //--// Iconify icons (port of build.luau ResolveIcon/BuildSvg) \\--//
-// Mirrors IsFaded in build.luau: icons with see-through layers (duotone) cannot be drawn by a one color font
+// Mirrors IsSpriteOnly in build.luau: duotone layers, masks and clips, and names starting with a digit cannot be drawn by the font
 function isFontless(set, name) {
   const icon = resolveIcon(set, name);
   if (!icon) return false;
+  if (/^\d/.test(name) || /<mask|clip-path|<clipPath/.test(icon.body)) return true;
   for (const [, value] of icon.body.matchAll(/opacity="([\d.]+)"/g)) {
     if (Number(value) < 1) return true;
   }
@@ -372,7 +373,7 @@ function renderDrawer() {
   const fontless = isFontless(state.data.set, name);
   el.miFont.disabled = !info.font || fontless;
   el.dHint.textContent = fontless
-    ? "This icon has see-through layers, so a font cannot draw it. It is only available as a sprite."
+    ? "A font cannot draw this icon faithfully, so it is only available as a sprite."
     : "This provider has no font, so icons are 24px sprites and look soft above that size.";
   el.dHint.hidden = fontless ? false : info.font || state.size <= SPRITE_SIZE;
 }
