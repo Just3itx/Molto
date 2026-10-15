@@ -23,7 +23,8 @@ if (previous.status === 0) {
 // A font covers one part of a provider, so every glyph must have a source svg but not the other way round
 const available = new Set((await readdir(iconsDir)).filter((name) => name.endsWith(".svg")).map((name) => name.slice(0, -4)));
 const names = Object.keys(data.icons).sort();
-for (const name of names) assert.ok(available.has(name), `No svg for glyph: ${name}`);
+// Digit-leading icons are stored under a prefixed ligature, see ligatureOf in build-font.mjs
+for (const name of names) assert.ok(available.has(name.replace(/^x-(?=\d)/, "")), `No svg for glyph: ${name}`);
 for (const [name, codepoint] of Object.entries(data.icons)) {
   assert.ok(codepoint >= 0xE000 && codepoint <= 0xF8FF, name);
   const index = font.charToGlyphIndex(String.fromCodePoint(codepoint));

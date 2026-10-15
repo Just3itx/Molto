@@ -187,6 +187,12 @@ local function FontPartOf(name: string, parts: number): number
 	return hash % parts + 1
 end
 
+-- Roblox does not shape a ligature whose text starts with a digit, so the font stores those icons with a letter prefix.
+-- Must match LigatureOf in scripts/build.luau
+local function LigatureOf(name: string): string
+	return if name:match("^%d") then `x-{name}` else name
+end
+
 -- Big sets are split into several fonts, so a font is downloaded when its first icon is looked up
 local function GetFontFace(state: ProviderState, part: number): Font?
 	local cached = state.Fonts[part]
@@ -344,7 +350,7 @@ function Registry.GetAsset(name: string, provider: string?)
 		-- Only present when the provider font loaded. The font shapes Text into one icon through a ligature
 		FontFace = fontFace,
 		FontPart = fontPart,
-		Text = if fontFace then resolved else nil,
+		Text = if fontFace then LigatureOf(resolved) else nil,
 	}
 end
 

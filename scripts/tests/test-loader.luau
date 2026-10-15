@@ -94,7 +94,7 @@ local function run(withFiles: boolean, badFont: boolean?)
 				local file = `site/fonts/{id}/{id}-{info.FontPart}.codepoints.json`
 				if fs.isFile(file) then
 					local glyphs = serde.decode("json", fs.readFile(file)).icons
-					assert(glyphs[icon], `Icon {id}/{icon} is not in font part {info.FontPart}`)
+					assert(glyphs[info.Text], `Icon {id}/{icon} is not in font part {info.FontPart}`)
 				end
 			end
 		end

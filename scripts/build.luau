@@ -425,9 +425,9 @@ end
 --// Fonts \\--
 -- Icons a font cannot draw faithfully stay sprite-only:
 -- see-through layers (duotone) turn into solid blobs because a font has one color,
--- masks and clips come out partial, and names starting with a digit do not shape in Roblox's text engine
-local function IsSpriteOnly(name: string, svg: string): boolean
-	if name:match("^%d") or svg:find("<mask", 1, true) or svg:find("clip-path", 1, true) or svg:find("<clipPath", 1, true) then
+-- and masks and clips come out partial
+local function IsSpriteOnly(svg: string): boolean
+	if svg:find("<mask", 1, true) or svg:find("clip-path", 1, true) or svg:find("<clipPath", 1, true) then
 		return true
 	end
 
@@ -438,6 +438,12 @@ local function IsSpriteOnly(name: string, svg: string): boolean
 		end
 	end
 	return false
+end
+
+-- Roblox does not shape a ligature whose text starts with a digit, so those icons get a letter prefix.
+-- Must match ligatureOf in scripts/build-font.mjs and LigatureOf in scripts/assets/template.luau
+local function LigatureOf(name: string): string
+	return if name:match("^%d") then `x-{name}` else name
 end
 
 -- Must match FontPartOf in scripts/assets/template.luau. Spreading icons by name hash (instead of by position)
@@ -574,11 +580,20 @@ end]]
 	local NoFont = {}
 	local FontIcons = {}
 	for _, name in Icons do
-		if IsSpriteOnly(name, fs.readFile(`{svgDir}/{name}.svg`)) then
+		if IsSpriteOnly(fs.readFile(`{svgDir}/{name}.svg`)) then
 			table.insert(NoFont, name)
 		else
 			table.insert(FontIcons, name)
 		end
+	end
+
+	local Taken = {}
+	for _, name in Icons do
+		Taken[name] = true
+	end
+	for _, name in FontIcons do
+		local ligature = LigatureOf(name)
+		assert(ligature == name or not Taken[ligature], `Ligature {ligature} for {name} clashes with an icon of the same name`)
 	end
 
 	fs.writeFile(
@@ -605,7 +620,7 @@ end]]
 	if provider.font ~= false then
 		local TotalCost = 0
 		for _, name in FontIcons do
-			TotalCost += 6 + 2 * #name
+			TotalCost += 6 + 2 * #LigatureOf(name)
 		end
 
 		local PartCount = math.max(1, math.ceil(TotalCost / FONT_PART_BUDGET))

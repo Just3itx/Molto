@@ -13,11 +13,15 @@ const iconsDir = path.resolve(`build/outputs/${fontName}/part-svgs`);
 const outputDir = path.resolve(outputArg);
 const outlinedDir = path.resolve(`build/outputs/${fontName}/font-outlines`);
 const fontDir = path.resolve(`build/outputs/${fontName}/font`);
-const names = JSON.parse(await readFile(path.resolve(namesArg), "utf8")).sort();
+// Roblox does not shape a ligature whose text starts with a digit, so those icons get a letter prefix.
+// Must match LigatureOf in scripts/build.luau and scripts/assets/template.luau
+const ligatureOf = (name) => (/^\d/.test(name) ? `x-${name}` : name);
+const sources = JSON.parse(await readFile(path.resolve(namesArg), "utf8"));
+const names = sources.map(ligatureOf).sort();
 if (!names.length) throw new Error("No icons given for font generation");
 await rm(iconsDir, { recursive: true, force: true });
 await mkdir(iconsDir, { recursive: true });
-for (const name of names) await copyFile(path.join(svgDir, `${name}.svg`), path.join(iconsDir, `${name}.svg`));
+for (const name of sources) await copyFile(path.join(svgDir, `${name}.svg`), path.join(iconsDir, `${ligatureOf(name)}.svg`));
 let previous = { icons: {}, nextCodepoint: 0xE000 };
 try {
   previous = JSON.parse(await readFile(path.join(outputDir, `${fontName}.codepoints.json`), "utf8"));

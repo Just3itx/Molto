@@ -79,11 +79,11 @@ function normalizeHex(text) {
 }
 
 //--// Iconify icons (port of build.luau ResolveIcon/BuildSvg) \\--//
-// Mirrors IsSpriteOnly in build.luau: duotone layers, masks and clips, and names starting with a digit cannot be drawn by the font
+// Mirrors IsSpriteOnly in build.luau: duotone layers, masks and clips cannot be drawn by the font
 function isFontless(set, name) {
   const icon = resolveIcon(set, name);
   if (!icon) return false;
-  if (/^\d/.test(name) || /<mask|clip-path|<clipPath/.test(icon.body)) return true;
+  if (/<mask|clip-path|<clipPath/.test(icon.body)) return true;
   for (const [, value] of icon.body.matchAll(/opacity="([\d.]+)"/g)) {
     if (Number(value) < 1) return true;
   }
