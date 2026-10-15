@@ -1,5 +1,5 @@
 {
-  "version": "ee4f77d06bd028223415360194964cbf4fd0595d59b12712b8422a4d78fb888f",
+  "version": "15e912f909c4b1f72c87c75810bd628d2abdc7299d010563ef0d8171b917b3b7",
   "nextCodepoint": 59048,
   "icons": {
     "accessibility-outline": 57345,
@@ -708,7 +708,6 @@
     "round-sort-vertical-bold": 58817,
     "round-transfer-diagonal-linear": 58818,
     "round-transfer-vertical-linear": 58819,
-    "rounded-magnifer-zoom-out-bold": 58034,
     "rounded-magnifier-bug-bold": 58035,
     "rounded-magnifier-bug-broken": 58820,
     "rounded-magnifier-check-bold": 58821,

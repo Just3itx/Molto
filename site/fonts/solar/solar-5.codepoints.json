@@ -1,5 +1,5 @@
 {
-  "version": "8a4420971c7fdbbd6d49990c3e01e37a39ddcf6fca6d931e7f5a67af88280ad5",
+  "version": "747a4be89b7c139403d2f6c4ed7f181cecdf6aafe961511334a6378f4922283b",
   "nextCodepoint": 59007,
   "icons": {
     "add-folder-bold": 58202,
@@ -481,7 +481,6 @@
     "magic-wand-3-outline": 58590,
     "magnet-broken": 58591,
     "magnet-outline": 58592,
-    "magnifer-bug-line-duotone": 58593,
     "magnifier-check-linear": 58594,
     "magnifier-check-outline": 58595,
     "magnifier-close-linear": 58596,
@@ -517,7 +516,6 @@
     "menu-dots-vertical-bold": 58622,
     "microphone-linear": 58623,
     "microphone-outline": 58624,
-    "minimalistic-magnifer-zoom-out-line-duotone": 57792,
     "minimalistic-magnifier-bug-linear": 57793,
     "minimalistic-magnifier-linear": 58625,
     "minimalistic-magnifier-zoom-in-linear": 58626,
@@ -682,8 +680,6 @@
     "round-sort-vertical-broken": 58746,
     "round-transfer-diagonal-bold": 57939,
     "rounded-magnifer-bold": 57941,
-    "rounded-magnifer-bug-line-duotone": 58747,
-    "rounded-magnifer-zoom-out-line-duotone": 58748,
     "rounded-magnifier-bold": 57944,
     "rounded-magnifier-broken": 58749,
     "rounded-magnifier-check-linear": 58750,

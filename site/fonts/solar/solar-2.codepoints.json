@@ -1,5 +1,5 @@
 {
-  "version": "013e6b8a4766d4634e07f6e21adf438691a0562d5eb5e9b233d00465daa3a57e",
+  "version": "a89d8f33f046ebcf88d8be41fa8bac72b493c08a228d95147affd052ed78a713",
   "nextCodepoint": 58977,
   "icons": {
     "accessibility-broken": 58182,
@@ -515,7 +515,6 @@
     "magic-wand-2-broken": 57782,
     "magic-wand-2-outline": 58607,
     "magic-wand-3-broken": 58608,
-    "magnifer-zoom-out-line-duotone": 57784,
     "magnifier-bug-bold": 58609,
     "magnifier-bug-broken": 57785,
     "magnifier-close-broken": 58610,
