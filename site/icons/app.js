@@ -79,6 +79,16 @@ function normalizeHex(text) {
 }
 
 //--// Iconify icons (port of build.luau ResolveIcon/BuildSvg) \\--//
+// Mirrors IsFaded in build.luau: icons with see-through layers (duotone) cannot be drawn by a one color font
+function isFontless(set, name) {
+  const icon = resolveIcon(set, name);
+  if (!icon) return false;
+  for (const [, value] of icon.body.matchAll(/opacity="([\d.]+)"/g)) {
+    if (Number(value) < 1) return true;
+  }
+  return false;
+}
+
 function resolveIcon(set, name, seen = new Set()) {
   const icon = set.icons[name];
   if (icon) {
@@ -359,8 +369,12 @@ function renderDrawer() {
     shown.map((alias) => `<span>${escapeHtml(alias)}</span>`).join("") +
     (aliases.length > shown.length ? `<b>+${aliases.length - shown.length}</b>` : "");
 
-  el.miFont.disabled = !info.font;
-  el.dHint.hidden = info.font || state.size <= SPRITE_SIZE;
+  const fontless = isFontless(state.data.set, name);
+  el.miFont.disabled = !info.font || fontless;
+  el.dHint.textContent = fontless
+    ? "This icon has see-through layers, so a font cannot draw it. It is only available as a sprite."
+    : "This provider has no font, so icons are 24px sprites and look soft above that size.";
+  el.dHint.hidden = fontless ? false : info.font || state.size <= SPRITE_SIZE;
 }
 
 function select(name, { scroll = false } = {}) {
@@ -452,8 +466,8 @@ function runAction(action) {
   switch (action) {
     case "lua":
       // Fonts are crisp at any size, so they are the default whenever the provider has one
-      if (code.format === "image") return runAction("lua-image");
-      return runAction(state.data.info.font && code.format !== "image" ? "lua-font" : "lua-image");
+      if (code.format === "image" || isFontless(state.data.set, name)) return runAction("lua-image");
+      return runAction(state.data.info.font ? "lua-font" : "lua-image");
     case "lua-image":
       return copy(luaFor(name, "image"), "Luau copied");
     case "lua-font":

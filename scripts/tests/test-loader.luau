@@ -77,15 +77,20 @@ local function run(withFiles: boolean, badFont: boolean?)
 
 		-- every icon resolves to a rect that fits inside a sheet, and every alias resolves
 		local icons = registry.GetIcons()
+		local noFont = {}
+		for _, name in luau.load(fs.readFile(`site/providers/{id}.lua`))().NoFont or {} do
+			noFont[name] = true
+		end
 		assert(#icons == manifest[id].Count, `Icon count mismatch: {id}`)
 		for _, icon in icons do
 			local info = assert(registry.GetAsset(icon), `Missing icon: {id}/{icon}`)
 			assert(info.ImageRectSize[1] > 0 and info.ImageRectOffset[1] + info.ImageRectSize[1] <= 1024, `Bad rect: {id}/{icon}`)
 			assert(info.ImageRectOffset[2] + info.ImageRectSize[2] <= 1024, `Bad rect: {id}/{icon}`)
-			assert((info.FontFace ~= nil) == (withFiles and manifest[id].Font and not badFont), `Font mismatch: {id}/{icon}`)
+			local expectFont = withFiles and manifest[id].Font and not badFont and not noFont[icon]
+			assert((info.FontFace ~= nil) == (expectFont == true), `Font mismatch: {id}/{icon}`)
 
 			-- the font part the loader picks must be the one the build put this icon in
-			if withFiles and manifest[id].Font and not badFont then
+			if expectFont then
 				local file = `site/fonts/{id}/{id}-{info.FontPart}.codepoints.json`
 				if fs.isFile(file) then
 					local glyphs = serde.decode("json", fs.readFile(file)).icons

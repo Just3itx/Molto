@@ -13,6 +13,7 @@ type ProviderConfig = {
 	prefix: string,
 	name: string?,
 	font: boolean?,
+	revision: number?,
 }
 
 type ProviderMeta = {
@@ -388,17 +389,20 @@ local function ComputeSourceHash(provider: ProviderConfig): string
 	local setPath = `{ICON_SETS_DIR}/json/{provider.prefix}.json`
 	assert(fs.isFile(setPath), `Icon set "{provider.prefix}" not found in iconify/icon-sets`)
 
-	return serde.hash(
-		"sha256",
-		table.concat({
-			serde.hash("sha256", fs.readFile(setPath)),
-			tostring(PIPELINE_VERSION),
-			tostring(ICON_SIZE),
-			tostring(FONT_PART_BUDGET),
-			tostring(provider.font ~= false),
-			provider.name or "",
-		}, "\n")
-	)
+	local parts = {
+		serde.hash("sha256", fs.readFile(setPath)),
+		tostring(PIPELINE_VERSION),
+		tostring(ICON_SIZE),
+		tostring(FONT_PART_BUDGET),
+		tostring(provider.font ~= false),
+		provider.name or "",
+	}
+	-- Bumped in providers.json to rebuild one provider without touching the others
+	if provider.revision then
+		table.insert(parts, `revision {provider.revision}`)
+	end
+
+	return serde.hash("sha256", table.concat(parts, "\n"))
 end
 
 local function IsUpToDate(provider: ProviderConfig, hash: string): boolean
@@ -419,6 +423,17 @@ local function IsUpToDate(provider: ProviderConfig, hash: string): boolean
 end
 
 --// Fonts \\--
+-- A font has one color, so icons drawn with see-through layers (duotone) turn into solid blobs. They stay sprite-only
+local function IsFaded(svg: string): boolean
+	for value in svg:gmatch('opacity="([%d%.]+)"') do
+		local opacity = tonumber(value)
+		if opacity and opacity < 1 then
+			return true
+		end
+	end
+	return false
+end
+
 -- Must match FontPartOf in scripts/assets/template.luau. Spreading icons by name hash (instead of by position)
 -- means adding or removing an icon only changes the font part that icon belongs to
 local function FontPartOf(name: string, parts: number): number
@@ -550,9 +565,19 @@ end]]
 		end
 	end
 
+	local NoFont = {}
+	local FontIcons = {}
+	for _, name in Icons do
+		if IsFaded(fs.readFile(`{svgDir}/{name}.svg`)) then
+			table.insert(NoFont, name)
+		else
+			table.insert(FontIcons, name)
+		end
+	end
+
 	fs.writeFile(
 		`site/providers/{provider.id}.lua`,
-		"return " .. LuaEncode({ Icons = Icons, Aliases = Aliases, Rects = Rects, Sheets = Sheets })
+		"return " .. LuaEncode({ Icons = Icons, Aliases = Aliases, Rects = Rects, Sheets = Sheets, NoFont = if #NoFont > 0 then NoFont else nil })
 	)
 
 	-- Index for the icon browser in site/
@@ -573,7 +598,7 @@ end]]
 	local FontParts = 0
 	if provider.font ~= false then
 		local TotalCost = 0
-		for _, name in Icons do
+		for _, name in FontIcons do
 			TotalCost += 6 + 2 * #name
 		end
 
@@ -582,7 +607,7 @@ end]]
 		for part = 1, PartCount do
 			PartNames[part] = {}
 		end
-		for _, name in Icons do
+		for _, name in FontIcons do
 			table.insert(PartNames[FontPartOf(name, PartCount)], name)
 		end
 

@@ -80,6 +80,7 @@ type ProviderState = {
 	Icons: { string },
 	Aliases: { [string]: string },
 	Rects: { { any } },
+	NoFont: { [string]: boolean },
 	Index: { [string]: number },
 	SheetUrls: { [number]: string },
 	Folder: string,
@@ -153,11 +154,18 @@ local function LoadProvider(id: string): ProviderState
 		index[name] = position
 	end
 
+	-- Icons with see-through layers cannot be drawn by a one color font, so they only exist as sprites
+	local noFont = {}
+	for _, name in data.NoFont or {} do
+		noFont[name] = true
+	end
+
 	local state: ProviderState = {
 		Id = id,
 		Icons = data.Icons,
 		Aliases = data.Aliases,
 		Rects = data.Rects,
+		NoFont = noFont,
 		Index = index,
 		SheetUrls = sheetUrls,
 		Folder = folder,
@@ -271,7 +279,7 @@ function Registry.PreloadAsync(names: { string }?, provider: string?): number
 	if names then
 		for _, name in names do
 			local resolved = Resolve(state, name)
-			if state.Index[resolved] then
+			if state.Index[resolved] and not state.NoFont[resolved] then
 				Add(FontPartOf(resolved, state.FontParts))
 			end
 		end
@@ -323,7 +331,7 @@ function Registry.GetAsset(name: string, provider: string?)
 	end
 
 	local rect = state.Rects[position]
-	local fontPart = if state.FontParts then FontPartOf(resolved, state.FontParts) else nil
+	local fontPart = if state.FontParts and not state.NoFont[resolved] then FontPartOf(resolved, state.FontParts) else nil
 	local fontFace = if fontPart then GetFontFace(state, fontPart) else nil
 
 	return {

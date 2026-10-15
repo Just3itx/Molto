@@ -4,8 +4,8 @@
 		{ "id": "lucide", "prefix": "lucide", "name": "Lucide" },
 		{ "id": "tabler", "prefix": "tabler", "name": "Tabler" },
 		{ "id": "heroicons", "prefix": "heroicons", "name": "Heroicons" },
-		{ "id": "phosphor", "prefix": "ph", "name": "Phosphor" },
+		{ "id": "phosphor", "prefix": "ph", "name": "Phosphor", "revision": 2 },
 		{ "id": "fluent", "prefix": "fluent", "name": "Fluent UI" },
-		{ "id": "solar", "prefix": "solar", "name": "Solar" }
+		{ "id": "solar", "prefix": "solar", "name": "Solar", "revision": 2 }
 	]
 }
